@@ -1,0 +1,31 @@
+{
+  "_spdx": {
+    "SPDX-License-Identifier": "Apache-2.0",
+    "SPDX-FileCopyrightText": "Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved."
+  },
+  "companyName": "ABC Company",
+  "currency": "USD",
+  "requiredFields": ["merchant", "transactionDate", "amount", "currency"],
+  "receiptRequired": true,
+  "businessPurposeRequired": true,
+  "meal": {
+    "category": "Meals",
+    "attendeesRequiredAbove": 75,
+    "warnAbove": 100,
+    "tipWarnPercent": 25
+  },
+  "lodging": {
+    "category": "Lodging",
+    "stayDatesWarning": true
+  },
+  "age": {
+    "warnIfOlderThanDays": 90
+  },
+  "cash": {
+    "warnIfCashPayment": true
+  },
+  "highAmount": {
+    "warnThreshold": 500,
+    "blockThreshold": 5000
+  }
+}

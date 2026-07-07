@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+
+name: abc-expense-intelligence-nemoclaw-style-policy
+purpose: Demonstrate runtime controls around an agentic multimodal receipt workflow.
+network:
+  allowed_outbound_hosts:
+    - integrate.api.nvidia.com
+    - build.nvidia.com
+    - localhost
+    - 127.0.0.1
+  blocked_hosts:
+    - metadata.google.internal
+    - 169.254.169.254
+tools:
+  allowlist:
+    - trip.create
+    - receipt.store_upload
+    - nemotron.parse
+    - nemotron.omni
+    - receipt.schema_guard_repair
+    - policy.evaluate
+    - csv.export
+    - human.approve
+secrets:
+  redact: true
+  examples:
+    - NVIDIA_API_KEY
+    - NEMOTRON_PARSE_API_KEY
+    - NEMOTRON_OMNI_API_KEY
+human_approval:
+  required_before_downstream_handoff: true
+model_routing:
+  parse: nvidia/nemotron-parse
+  reasoning: nvidia/nemotron-3-nano-omni-30b-a3b-reasoning
+  fallback: local-deterministic-fixture-evidence

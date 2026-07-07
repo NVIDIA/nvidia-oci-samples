@@ -47,6 +47,8 @@ Samples are organized by OCI service:
 
 - [`oke-samples/`](./oke-samples) — Samples that run on [Oracle Container Engine for Kubernetes (OKE)](https://www.oracle.com/cloud/cloud-native/container-engine-kubernetes/).
   - `aiq-2.0/` — NVIDIA AIQ 2.0 on OKE *(coming soon)*
+- [`generative-ai-samples/`](./generative-ai-samples) — Samples for NVIDIA generative AI workflows on OCI.
+  - [`agentic-multimodal-expense-intelligence/`](./generative-ai-samples/agentic-multimodal-expense-intelligence/) — Nemotron Parse + Omni receipt intelligence with NemoClaw-style governance controls.
 
 Additional samples will be added over time.
 
