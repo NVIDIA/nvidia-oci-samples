@@ -41,12 +41,25 @@ export function mimeFromPath(path: string): string {
 export async function readRequestJson<T>(request: IncomingMessage): Promise<T> {
   const chunks: Buffer[] = [];
   const maxBytes = 25 * 1024 * 1024;
+  const idleTimeoutMs = 30_000;
   let totalBytes = 0;
-  for await (const chunk of request) {
-    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-    totalBytes += buffer.length;
-    if (totalBytes > maxBytes) throw new Error("Request body too large");
-    chunks.push(buffer);
+  let idleTimer: ReturnType<typeof setTimeout> | undefined;
+  // Reset on every chunk so a slow client that stops sending data can't hold the connection open indefinitely.
+  const armIdleTimer = () => {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => request.destroy(new Error("Request body read timed out")), idleTimeoutMs);
+  };
+  try {
+    armIdleTimer();
+    for await (const chunk of request) {
+      armIdleTimer();
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      totalBytes += buffer.length;
+      if (totalBytes > maxBytes) throw new Error("Request body too large");
+      chunks.push(buffer);
+    }
+  } finally {
+    if (idleTimer) clearTimeout(idleTimer);
   }
   const text = Buffer.concat(chunks).toString("utf8");
   return (text ? JSON.parse(text) : {}) as T;

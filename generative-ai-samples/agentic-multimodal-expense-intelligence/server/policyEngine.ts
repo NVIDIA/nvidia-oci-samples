@@ -42,6 +42,6 @@ export function statusFromChecks(checks: PolicyCheck[]): "ready_for_review" | "b
 
 function requiredFieldCheck(fields: ReceiptFields, field: string): PolicyCheck {
   const value = (fields as Record<string, unknown>)[field];
-  const present = value !== null && value !== undefined && value !== "";
+  const present = typeof value === "string" ? hasText(value) : value !== null && value !== undefined;
   return { id: `required-${field}`, decision: present ? "pass" : "block", reason: present ? `${field} is present.` : `${field} is required for downstream expense staging.`, evidence: { value } };
 }

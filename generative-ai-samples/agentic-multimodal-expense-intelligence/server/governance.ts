@@ -25,7 +25,9 @@ export class RuntimeControls {
     try {
       const policy = JSON.parse(await readFile(join(rootDir, "config", "runtime-policy.example.json"), "utf8")) as RuntimePolicy;
       return new RuntimeControls(policy, audit);
-    } catch {
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      console.warn(`Runtime policy failed to load; falling back to deny-all controls: ${reason}`);
       return new RuntimeControls({}, audit);
     }
   }

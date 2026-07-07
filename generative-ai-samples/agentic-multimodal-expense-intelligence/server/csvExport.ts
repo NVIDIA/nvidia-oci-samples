@@ -14,5 +14,8 @@ export function tripCsv(trip: TripRecord, expenses: ExpenseRecord[]): string {
 
 function csvCell(value: unknown): string {
   const text = value === null || value === undefined ? "" : String(value);
-  return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+  // Neutralize CSV/formula injection: prefix a single quote when a string field
+  // begins with a formula trigger so spreadsheet consumers treat it as text (CWE-1236).
+  const guarded = typeof value === "string" && /^[=+\-@\t\r]/.test(text) ? `'${text}` : text;
+  return /[",\n]/.test(guarded) ? `"${guarded.replaceAll('"', '""')}"` : guarded;
 }

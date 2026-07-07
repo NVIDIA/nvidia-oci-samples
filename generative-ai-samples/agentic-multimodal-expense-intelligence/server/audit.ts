@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
 import type { AuditEvent, Severity } from "./types.ts";
-import { newId, nowIso } from "./util.ts";
+import { newId, nowIso, redactSecrets } from "./util.ts";
 import type { DataStore } from "./dataStore.ts";
 
 export class AuditLogger {
@@ -22,7 +22,7 @@ export class AuditLogger {
       action: input.action,
       tripId: input.tripId,
       expenseId: input.expenseId,
-      details: input.details,
+      details: input.details === undefined ? undefined : redactSecrets(input.details),
     };
     await this.store.addAudit(event);
     return event;

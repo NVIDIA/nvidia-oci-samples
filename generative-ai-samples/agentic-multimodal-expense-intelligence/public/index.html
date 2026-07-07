@@ -42,14 +42,14 @@ SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All 
           <span>Embed Parse, Omni, and governed agent execution into enterprise workflows.</span>
         </div>
       </header>
-      <nav class="tabs" aria-label="Demo sections">
-        <button class="tab active" data-tab="workflow">Workflow</button>
-        <button class="tab" data-tab="apiKeys">API Keys</button>
-        <button class="tab" data-tab="metrics">Metrics</button>
-        <button class="tab" data-tab="help">Help</button>
+      <nav class="tabs" role="tablist" aria-label="Demo sections">
+        <button class="tab active" role="tab" id="tab-workflow" data-tab="workflow" aria-selected="true" aria-controls="workflowPane">Workflow</button>
+        <button class="tab" role="tab" id="tab-apiKeys" data-tab="apiKeys" aria-selected="false" aria-controls="apiKeysPane">API Keys</button>
+        <button class="tab" role="tab" id="tab-metrics" data-tab="metrics" aria-selected="false" aria-controls="metricsPane">Metrics</button>
+        <button class="tab" role="tab" id="tab-help" data-tab="help" aria-selected="false" aria-controls="helpPane">Help</button>
       </nav>
       <section id="progress" class="progress hidden"></section>
-      <section id="workflowPane" class="tab-pane active">
+      <section id="workflowPane" class="tab-pane active" role="tabpanel" aria-labelledby="tab-workflow">
         <section class="grid two">
           <div class="panel">
             <div class="panel-head"><h2>Trip Reports</h2><span id="tripCount">0</span></div>
@@ -62,7 +62,7 @@ SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All 
         </section>
         <section id="detail" class="detail empty">Import a receipt folder to create the first governed trip report.</section>
       </section>
-      <section id="apiKeysPane" class="tab-pane">
+      <section id="apiKeysPane" class="tab-pane" role="tabpanel" aria-labelledby="tab-apiKeys">
         <section class="panel">
           <div class="panel-head"><h2>Browser Session API Keys</h2><span>not persisted</span></div>
           <div class="section-body">
@@ -86,7 +86,7 @@ SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All 
           </div>
         </section>
       </section>
-      <section id="metricsPane" class="tab-pane">
+      <section id="metricsPane" class="tab-pane" role="tabpanel" aria-labelledby="tab-metrics">
         <section class="panel">
           <div class="panel-head"><h2>Expense Processing Metrics</h2><span id="metricsMode">local</span></div>
           <div id="stats" class="stats"></div>
@@ -96,7 +96,7 @@ SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All 
           <div id="phaseMetrics" class="section-body"></div>
         </section>
       </section>
-      <section id="helpPane" class="tab-pane">
+      <section id="helpPane" class="tab-pane" role="tabpanel" aria-labelledby="tab-help">
         <section class="panel">
           <div class="panel-head"><h2>How This Demo Works</h2><span>developer guide</span></div>
           <div class="section-body help-grid">

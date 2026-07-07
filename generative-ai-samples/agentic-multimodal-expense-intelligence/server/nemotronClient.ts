@@ -105,7 +105,7 @@ export function flattenParseEvidence(content: unknown): string {
   return "";
 }
 
-function dedupeLines(value: string): string {
+export function dedupeLines(value: string): string {
   const seen = new Set<string>();
   return value.split("\n").filter((line) => {
     const normalized = line.trim();
@@ -135,13 +135,27 @@ export function mapOmniReceiptJson(content: unknown, receiptFileRef?: string): {
   const confidenceSource = asRecord(parsed.confidence) ?? {};
   const confidence: Record<string, number> = {};
   for (const key of Object.keys(fields)) {
+    // receiptFileRef is caller-supplied, not model-extracted, so it must not get a fabricated confidence.
+    if (key === "receiptFileRef") continue;
     const raw = confidenceSource[key] ?? confidenceSource[snakeCase(key)];
     if (typeof raw === "number" && Number.isFinite(raw)) confidence[key] = Math.max(0, Math.min(1, raw));
     else if ((fields as Record<string, unknown>)[key] !== undefined && (fields as Record<string, unknown>)[key] !== null) confidence[key] = 0.72;
   }
-  const provenance = Array.isArray(parsed.provenance) ? parsed.provenance as FieldProvenance[] : [];
-  const reasoning = Array.isArray(parsed.reasoning) ? parsed.reasoning as FieldReasoning[] : [];
+  const provenance = Array.isArray(parsed.provenance) ? parsed.provenance.filter(isFieldProvenance) : [];
+  const reasoning = Array.isArray(parsed.reasoning) ? parsed.reasoning.filter(isFieldReasoning) : [];
   return { fields, confidence, provenance, reasoning };
+}
+
+const PROVENANCE_SOURCES = new Set(["nemotron-parse", "nemotron-omni", "schema-guard", "fixture", "human"]);
+
+function isFieldProvenance(value: unknown): value is FieldProvenance {
+  const record = asRecord(value);
+  return record !== null && typeof record.field === "string" && typeof record.evidence === "string" && typeof record.source === "string" && PROVENANCE_SOURCES.has(record.source);
+}
+
+function isFieldReasoning(value: unknown): value is FieldReasoning {
+  const record = asRecord(value);
+  return record !== null && typeof record.field === "string" && typeof record.summary === "string";
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {

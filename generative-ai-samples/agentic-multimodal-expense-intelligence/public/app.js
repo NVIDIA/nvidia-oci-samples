@@ -44,7 +44,11 @@ async function refresh() {
 
 function setTab(tab) {
   activeTab = tab;
-  for (const button of document.querySelectorAll("[data-tab]")) button.classList.toggle("active", button.getAttribute("data-tab") === tab);
+  for (const button of document.querySelectorAll("[data-tab]")) {
+    const isActive = button.getAttribute("data-tab") === tab;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-selected", String(isActive));
+  }
   for (const pane of document.querySelectorAll(".tab-pane")) pane.classList.toggle("active", pane.id === `${tab}Pane`);
 }
 
@@ -362,4 +366,4 @@ function fileToBase64(file) {
 
 function money(amount, currency = "USD") { return typeof amount === "number" ? `${currency || "USD"} ${amount.toFixed(2)}` : ""; }
 function label(value) { return String(value || "").replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase()); }
-function escapeHtml(value) { return String(value ?? "").replace(/[&<>"]/g, (ch) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[ch])); }
+function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, (ch) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[ch])); }

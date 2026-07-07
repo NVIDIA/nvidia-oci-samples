@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
 import type { AuditLogger } from "./audit.ts";
@@ -64,59 +64,66 @@ export class TripWorkflow {
     }
 
     await this.controls.authorizeTool(trip, "receipt.store_upload", `Store uploaded receipt ${file.fileName}.`);
-    const safeName = `${trip.id}-${stableHash(file.fileName + String(file.lastModified ?? ""))}-${sanitizeFileName(file.fileName)}`;
+    const expenseId = newId("exp");
+    // Include the unique expense id so two same-name uploads in one trip can't overwrite each other's receipt.
+    const safeName = `${trip.id}-${expenseId}-${stableHash(file.fileName + String(file.lastModified ?? ""))}-${sanitizeFileName(file.fileName)}`;
     const uploadPath = join(this.store.uploadsDir, safeName);
     await mkdir(this.store.uploadsDir, { recursive: true });
     await writeFile(uploadPath, Buffer.from(file.contentBase64, "base64"));
     const receiptFileRef = `/uploads/${safeName}`;
 
-    const expenseId = newId("exp");
-    const extractStarted = performance.now();
-    const requestOptions = withRequestApiKeys(this.extractorOptions, file.modelApiKeys);
-    await this.audit.write({
-      type: "model.routing",
-      actor: "expense-intelligence-agent",
-      action: "model.route",
-      tripId,
-      expenseId,
-      details: {
-        executionMode: requestOptions.mode,
-        parseModel: requestOptions.parseModel,
-        omniModel: requestOptions.omniModel,
-        browserSessionKeyProvided: Boolean(file.modelApiKeys?.nvidiaApiKey || file.modelApiKeys?.parseApiKey || file.modelApiKeys?.omniApiKey),
-        serverEnvKeyConfigured: Boolean(this.extractorOptions.parseApiKey && this.extractorOptions.omniApiKey),
-      },
-    });
-    const extracted = await extractReceipt({ fileName: file.fileName, mimeType: file.mimeType, contentBase64: file.contentBase64, receiptFileRef, tripId, expenseId }, requestOptions, this.audit, this.controls);
-    const extractionMs = Math.round(performance.now() - extractStarted);
-    const fields: ReceiptFields = { ...extracted.fields, receiptFileRef };
-    const policyStarted = performance.now();
-    await this.controls.authorizeTool(trip, "policy.evaluate", `Evaluate ABC Company policy for ${file.fileName}.`);
-    const policyChecks = evaluatePolicy({ savedFields: fields }, trip.tripPurpose, this.policy);
-    const policyMs = Math.round(performance.now() - policyStarted);
-    const expense: ExpenseRecord = {
-      id: expenseId,
-      tripId,
-      fileName: file.fileName,
-      status: statusFromChecks(policyChecks),
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
-      extracted: { ...extracted, fields },
-      savedFields: fields,
-      policyChecks,
-      performance: [
-        { name: "receipt_upload", durationMs: Math.max(1, Math.round(extractStarted - started)) },
-        { name: "parse_omni_repair", durationMs: extractionMs },
-        { name: "abc_policy", durationMs: policyMs },
-      ],
-    };
-    await this.store.addExpense(expense);
-    trip.expenseIds.push(expense.id);
-    trip.processedFiles += 1;
-    trip.updatedAt = nowIso();
-    await this.store.updateTrip(trip);
-    await this.audit.write({ type: "receipt.processed", actor: "expense-intelligence-agent", action: "receipt.process", tripId, expenseId, details: { fileName: file.fileName, status: expense.status, durationMs: Math.round(performance.now() - started) } });
-    return { trip, expense };
+    try {
+      const extractStarted = performance.now();
+      const requestOptions = withRequestApiKeys(this.extractorOptions, file.modelApiKeys);
+      await this.audit.write({
+        type: "model.routing",
+        actor: "expense-intelligence-agent",
+        action: "model.route",
+        tripId,
+        expenseId,
+        details: {
+          executionMode: requestOptions.mode,
+          parseModel: requestOptions.parseModel,
+          omniModel: requestOptions.omniModel,
+          browserSessionKeyProvided: Boolean(file.modelApiKeys?.nvidiaApiKey || file.modelApiKeys?.parseApiKey || file.modelApiKeys?.omniApiKey),
+          serverEnvKeyConfigured: Boolean(this.extractorOptions.parseApiKey && this.extractorOptions.omniApiKey),
+        },
+      });
+      const extracted = await extractReceipt({ fileName: file.fileName, mimeType: file.mimeType, contentBase64: file.contentBase64, receiptFileRef, tripId, expenseId }, requestOptions, this.audit, this.controls);
+      const extractionMs = Math.round(performance.now() - extractStarted);
+      const fields: ReceiptFields = { ...extracted.fields, receiptFileRef };
+      const policyStarted = performance.now();
+      await this.controls.authorizeTool(trip, "policy.evaluate", `Evaluate ABC Company policy for ${file.fileName}.`);
+      const policyChecks = evaluatePolicy({ savedFields: fields }, trip.tripPurpose, this.policy);
+      const policyMs = Math.round(performance.now() - policyStarted);
+      const expense: ExpenseRecord = {
+        id: expenseId,
+        tripId,
+        fileName: file.fileName,
+        status: statusFromChecks(policyChecks),
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+        extracted: { ...extracted, fields },
+        savedFields: fields,
+        policyChecks,
+        performance: [
+          { name: "receipt_upload", durationMs: Math.max(1, Math.round(extractStarted - started)) },
+          { name: "parse_omni_repair", durationMs: extractionMs },
+          { name: "abc_policy", durationMs: policyMs },
+        ],
+      };
+      await this.store.addExpense(expense);
+      trip.expenseIds.push(expense.id);
+      trip.processedFiles += 1;
+      trip.updatedAt = nowIso();
+      await this.store.updateTrip(trip);
+      await this.audit.write({ type: "receipt.processed", actor: "expense-intelligence-agent", action: "receipt.process", tripId, expenseId, details: { fileName: file.fileName, status: expense.status, durationMs: Math.round(performance.now() - started) } });
+      return { trip, expense };
+    } catch (error) {
+      // No expense was persisted, so remove the orphaned upload rather than leaving sensitive receipt data on disk.
+      await rm(uploadPath, { force: true });
+      throw error;
+    }
   }
 
   async completeTrip(tripId: string): Promise<TripRecord> {
@@ -131,14 +138,18 @@ export class TripWorkflow {
 
   async saveExpenseFields(expenseId: string, fields: ReceiptFields): Promise<{ trip: TripRecord; expense: ExpenseRecord }> {
     const expense = await this.mustExpense(expenseId);
+    const trip = await this.mustTrip(expense.tripId);
+    // Re-apply the runtime tool allowlist on the correction path, mirroring processFile, so edits can't bypass it.
+    await this.controls.authorizeTool(trip, "policy.evaluate", `Re-evaluate ABC Company policy after manual corrections to ${expense.fileName}.`);
+    await this.store.updateTrip(trip);
     expense.savedFields = { ...expense.savedFields, ...fields };
-    expense.policyChecks = evaluatePolicy({ savedFields: expense.savedFields }, (await this.mustTrip(expense.tripId)).tripPurpose, this.policy);
+    expense.policyChecks = evaluatePolicy({ savedFields: expense.savedFields }, trip.tripPurpose, this.policy);
     expense.status = statusFromChecks(expense.policyChecks);
     expense.updatedAt = nowIso();
     await this.store.updateExpense(expense);
-    const trip = await this.completeTrip(expense.tripId);
-    await this.audit.write({ type: "human.correction", actor: "reviewer", action: "expense.save_fields", tripId: trip.id, expenseId, details: { fields: expense.savedFields } });
-    return { trip, expense };
+    const completed = await this.completeTrip(expense.tripId);
+    await this.audit.write({ type: "human.correction", actor: "reviewer", action: "expense.save_fields", tripId: completed.id, expenseId, details: { fields: expense.savedFields } });
+    return { trip: completed, expense };
   }
 
   async approveTrip(tripId: string, approvedBy: string): Promise<TripRecord> {

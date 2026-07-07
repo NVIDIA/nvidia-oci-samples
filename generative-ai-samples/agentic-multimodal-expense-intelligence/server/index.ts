@@ -65,6 +65,9 @@ const server = createServer(async (request, response) => {
     }
     if (request.method === "POST" && url.pathname === "/api/trips") {
       const body = await readRequestJson<{ employeeName: string; tripName: string; tripPurpose: string; totalFiles: number }>(request);
+      if (typeof body.employeeName !== "string" || typeof body.tripName !== "string" || typeof body.tripPurpose !== "string") {
+        return sendJson(response, 400, { error: "employeeName, tripName, and tripPurpose must be provided as strings." });
+      }
       const trip = await workflow.createTrip(body);
       return sendJson(response, 201, { trip });
     }
@@ -78,6 +81,9 @@ const server = createServer(async (request, response) => {
     const approveMatch = url.pathname.match(/^\/api\/trips\/([^/]+)\/approve$/);
     if (request.method === "POST" && approveMatch) {
       const body = await readRequestJson<{ approvedBy: string }>(request);
+      if (typeof body.approvedBy !== "string" || body.approvedBy.trim() === "") {
+        return sendJson(response, 400, { error: "approvedBy is required." });
+      }
       return sendJson(response, 200, { trip: await workflow.approveTrip(approveMatch[1], body.approvedBy) });
     }
     const csvMatch = url.pathname.match(/^\/api\/trips\/([^/]+)\/export\.csv$/);
@@ -94,9 +100,25 @@ const server = createServer(async (request, response) => {
   }
 });
 
+server.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.code === "EADDRINUSE") {
+    console.error(`Port ${port} is already in use. Set APP_PORT to a free port and restart.`);
+  } else {
+    console.error(`HTTP server error: ${error.message}`);
+  }
+  process.exit(1);
+});
+
 server.listen(port, host, () => {
+  if (!isLoopbackHost(host)) {
+    console.warn(`APP_HOST is set to "${host}", which is not a loopback address. This sample has no authentication; endpoints like POST /api/reset and the trip/expense mutation routes would be open to any caller on a shared network.`);
+  }
   console.log(`Agentic Multimodal Expense Intelligence running at http://${host}:${port}/`);
 });
+
+function isLoopbackHost(value: string): boolean {
+  return value === "127.0.0.1" || value === "::1" || value.toLowerCase() === "localhost";
+}
 
 async function serveStatic(pathname: string, request: IncomingMessage, response: import("node:http").ServerResponse): Promise<void> {
   const publicRoot = resolve(rootDir, "public");

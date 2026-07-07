@@ -1,6 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
+# NOTE: This YAML is documentation only. It illustrates how these controls would be
+# expressed for an external nemoclaw-compatible runtime and is NOT parsed by this sample.
+# The policy actually enforced at runtime is config/runtime-policy.example.json (loaded by
+# RuntimeControls.load in server/governance.ts). Keep the two in sync when editing either.
+
 name: abc-expense-intelligence-nemoclaw-style-policy
 purpose: Demonstrate runtime controls around an agentic multimodal receipt workflow.
 network:

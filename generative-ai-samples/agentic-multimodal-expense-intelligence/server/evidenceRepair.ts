@@ -61,11 +61,10 @@ type Candidate<T> = { value: T; rawValue: string; evidence: string; score: numbe
 
 function fill(result: StructuredReceipt, repaired: Set<string>, field: keyof ReceiptFields, value: string | number, confidence: number, evidence: string, summary: string, rawValue?: string, force = false): void {
   if (!force && !missing(result.fields[field])) return;
-  if (force) {
-    delete result.confidence[field];
-    result.provenance = result.provenance.filter((item) => item.field !== field);
-    result.reasoning = result.reasoning.filter((item) => item.field !== field);
-  }
+  if (force) delete result.confidence[field];
+  // Drop any stale entries for this field first so a fill never leaves duplicate provenance/reasoning records.
+  result.provenance = result.provenance.filter((item) => item.field !== field);
+  result.reasoning = result.reasoning.filter((item) => item.field !== field);
   result.fields[field] = value as never;
   result.confidence[field] = force ? confidence : Math.max(result.confidence[field] ?? 0, confidence);
   result.provenance.push({ field, source: "schema-guard", evidence });
@@ -180,7 +179,7 @@ function amountCandidate(line: string, match: RegExpMatchArray): Candidate<numbe
 }
 
 function moneyMatches(value: string): RegExpMatchArray[] {
-  return [...value.matchAll(/(?:USD|US\$|\$)\s*[0-9]{1,6}(?:,[0-9]{3})*(?:\.[0-9]{2})/gi), ...value.matchAll(/\b[0-9]{1,6}(?:,[0-9]{3})*\.[0-9]{2}\b/g)];
+  return [...value.matchAll(/(?:USD|US\$|\$)\s*[0-9]{1,6}(?:,[0-9]{3})*(?:\.[0-9]{2})?/gi), ...value.matchAll(/\b[0-9]{1,6}(?:,[0-9]{3})*\.[0-9]{2}\b/g)];
 }
 
 function shouldReplaceAmount(current: unknown, candidate: Candidate<number>, evidence: string): boolean {

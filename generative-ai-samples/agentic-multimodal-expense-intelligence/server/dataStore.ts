@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { AppState, AuditEvent, ExpenseRecord, TripRecord } from "./types.ts";
 
@@ -9,6 +9,7 @@ export class DataStore {
   rootDir: string;
   stateFile: string;
   uploadsDir: string;
+  private mutateQueue: Promise<unknown> = Promise.resolve();
 
   constructor(rootDir = process.cwd()) {
     this.rootDir = rootDir;
@@ -37,7 +38,10 @@ export class DataStore {
 
   async writeState(state: AppState): Promise<void> {
     await mkdir(dirname(this.stateFile), { recursive: true });
-    await writeFile(this.stateFile, `${JSON.stringify(state, null, 2)}\n`);
+    // Write to a temp file then rename so a crash mid-write can't truncate state.json (atomic on POSIX).
+    const tempFile = `${this.stateFile}.tmp`;
+    await writeFile(tempFile, `${JSON.stringify(state, null, 2)}\n`);
+    await rename(tempFile, this.stateFile);
   }
 
   async reset(): Promise<void> {
@@ -45,10 +49,15 @@ export class DataStore {
   }
 
   async mutate(mutator: (state: AppState) => void | Promise<void>): Promise<AppState> {
-    const state = await this.readState();
-    await mutator(state);
-    await this.writeState(state);
-    return state;
+    // Serialize read→modify→write so interleaved mutations can't overwrite each other's changes.
+    const run = this.mutateQueue.then(async () => {
+      const state = await this.readState();
+      await mutator(state);
+      await this.writeState(state);
+      return state;
+    });
+    this.mutateQueue = run.catch(() => undefined);
+    return run;
   }
 
   async addTrip(trip: TripRecord): Promise<void> {
