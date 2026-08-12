@@ -1,0 +1,40 @@
+{
+  "model": "black-forest-labs/FLUX.1-schnell",
+  "height": 1024,
+  "width": 1024,
+  "steps": 4,
+  "guidance_scale": 0.0,
+  "max_sequence_length": 256,
+  "batch_sizes": [1, 2, 4, 8, 16, 32],
+  "batch_semantics": "request-batch",
+  "prompt_count": "B",
+  "images_per_prompt": 1,
+  "decoded_images": "B",
+  "warmup": 2,
+  "iterations": 20,
+  "timing": {
+    "internal_runtime": {
+      "start": "before T5/CLIP text encoding",
+      "end": "after the decoded B-image GPU tensor is complete",
+      "synchronization": "explicit CUDA synchronization or an equivalent blocking runtime response",
+      "excludes": [
+        "GPU-to-CPU image transfer",
+        "PIL conversion",
+        "PNG/JPEG encoding",
+        "file I/O"
+      ]
+    },
+    "offline_api": {
+      "backends": ["sglang", "vllm-omni"],
+      "start": "before submitting B requests to the public in-process API",
+      "end": "after the API returns all B outputs",
+      "includes": ["local scheduling", "batching orchestration"],
+      "comparison_group": "reported separately from internal-runtime timing"
+    }
+  },
+  "nvfp4_scope": {
+    "transformer": "NVFP4 where supported by the selected engine",
+    "text_encoders": "BF16",
+    "vae": "BF16"
+  }
+}
