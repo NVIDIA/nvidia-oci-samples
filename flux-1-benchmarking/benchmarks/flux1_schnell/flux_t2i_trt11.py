@@ -7,6 +7,7 @@
 # THIRD_PARTY_NOTICES.md for the pinned upstream revision and license.
 
 import gc
+import inspect
 import os
 import shlex
 import shutil
@@ -204,6 +205,10 @@ def engine_infer_trt11(self: Engine, feed_dict):
                     raise ValueError("ERROR: inference failed.")
             elif self.cuda_graph is not None:
                 self.cuda_graph.replay()
+            else:
+                noerror = self.context.execute_async_v3(engine_stream.cuda_stream)
+                if not noerror:
+                    raise ValueError("ERROR: inference failed.")
 
         if use_cuda_graph and self.cuda_graph is None:
             # TensorRT requires one enqueue after a shape/profile change before
@@ -272,8 +277,8 @@ def save_image_with_optional_profiler_range(*args, **kwargs):
         return result
 
     # Keep image encoding and D2H copies outside the measured CUDA range.
-    index = kwargs["idx"] if "idx" in kwargs else args[3]
-    return index + 1
+    bound_arguments = inspect.signature(_original_save_image).bind(*args, **kwargs)
+    return bound_arguments.arguments["idx"] + 1
 
 
 Engine.device_memory_size = property(engine_device_memory_size_trt11)

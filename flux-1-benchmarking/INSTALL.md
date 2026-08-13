@@ -27,7 +27,9 @@ Keep checkpoints outside the repository. The runners consume these layouts:
     flux1-schnell.safetensors
     ae.safetensors
   google_t5-v1_1-xxl/
+    pytorch_model.bin
   openai_clip-vit-large-patch14/
+    model.safetensors
 
   FLUX.1-schnell-diffusers/
     model_index.json

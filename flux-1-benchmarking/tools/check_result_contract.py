@@ -11,14 +11,37 @@ from benchmarks.flux1_schnell.flux_prompt_bank import prompt_digest, request_pro
 
 
 def output_count(result: dict) -> int | None:
-    if result.get("output_count") is not None:
-        return int(result["output_count"])
+    explicit_count = result.get("output_count")
+    if explicit_count is not None:
+        if isinstance(explicit_count, bool) or not isinstance(explicit_count, int):
+            return None
+        return explicit_count
     for key in ("output_shape", "image_shape"):
         shape = result.get(key)
-        if shape:
-            return int(shape[0])
+        if shape is None:
+            continue
+        if not isinstance(shape, (list, tuple)) or not shape:
+            return None
+        count = shape[0]
+        if isinstance(count, bool) or not isinstance(count, int):
+            return None
+        return count
     image_shapes = result.get("image_shapes")
-    if image_shapes:
+    if (
+        isinstance(image_shapes, list)
+        and image_shapes
+        and all(
+            isinstance(shape, (list, tuple))
+            and shape
+            and all(
+                isinstance(dimension, int)
+                and not isinstance(dimension, bool)
+                and dimension > 0
+                for dimension in shape
+            )
+            for shape in image_shapes
+        )
+    ):
         return len(image_shapes)
     return None
 

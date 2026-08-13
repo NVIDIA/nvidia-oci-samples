@@ -88,8 +88,13 @@ def load_pytorch(args):
     }
     for alias, target in aliases.items():
         alias.parent.mkdir(parents=True, exist_ok=True)
-        if not alias.exists():
-            alias.symlink_to(target, target_is_directory=True)
+        resolved_target = target.resolve()
+        if alias.is_symlink():
+            if alias.resolve(strict=False) != resolved_target:
+                alias.unlink()
+                alias.symlink_to(resolved_target, target_is_directory=True)
+        elif not alias.exists():
+            alias.symlink_to(resolved_target, target_is_directory=True)
     previous_cwd = Path.cwd()
     os.chdir(alias_root)
     try:
@@ -121,7 +126,7 @@ def load_tensorrt(args, batch_size: int):
     else:
         os.environ["FLUX_TRT_CUDA_GRAPH"] = "0"
         os.environ["FLUX_TRT_DEDICATED_STREAM"] = "1"
-    os.environ["FLUX_TRT_NVTX"] = "0"
+    os.environ["FLUX_TRT_NVTX"] = "1" if args.nsys_capture else "0"
 
     engine_dir = args.engine_root / f"b{batch_size}"
     engine_dir.mkdir(parents=True, exist_ok=True)
@@ -153,6 +158,8 @@ def load_tensorrt(args, batch_size: int):
         trt_batch_size=batch_size,
         trt_static_batch=True,
         trt_static_shape=True,
+        # NVFP4 plans need the full TensorRT tactic-source search for compatible
+        # kernels; BF16 retains the upstream constrained tactic selection.
         trt_enable_all_tactics=args.precision == "fp4",
         trt_timing_cache=str(engine_dir / "timing_cache.bin"),
     )

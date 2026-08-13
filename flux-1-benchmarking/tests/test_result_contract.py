@@ -39,6 +39,29 @@ class OutputCountTest(unittest.TestCase):
     def test_visualgen_output_count(self):
         self.assertEqual(output_count({"image_shapes": [[3, 1024, 1024]] * 4}), 4)
 
+    def test_rejects_malformed_explicit_output_count(self):
+        for value in ([], {}, "invalid", True, 4.0):
+            with self.subTest(value=value):
+                self.assertIsNone(output_count({"output_count": value}))
+
+    def test_rejects_malformed_shape_count(self):
+        for value in ([], {}, "invalid", ["4", 3, 1024, 1024], [True]):
+            with self.subTest(value=value):
+                self.assertIsNone(output_count({"image_shape": value}))
+
+    def test_rejects_malformed_image_shapes(self):
+        for value in (
+            "invalid",
+            [None],
+            [["bad"]],
+            [[3, 1024, 1024], None],
+            [[True, 1024, 1024]],
+            [[3.0, 1024, 1024]],
+            [[3, 0, 1024]],
+        ):
+            with self.subTest(value=value):
+                self.assertIsNone(output_count({"image_shapes": value}))
+
 
 class ResultContractTest(unittest.TestCase):
     def test_contract_compliant_result(self):
@@ -60,6 +83,13 @@ class ResultContractTest(unittest.TestCase):
     def test_rejects_wrong_output_count(self):
         result = contract_compliant_result()
         result["output_count"] = 1
+        errors = contract_errors(result)
+        self.assertTrue(any("output_count" in error for error in errors))
+
+    def test_rejects_malformed_image_shapes(self):
+        result = contract_compliant_result()
+        result.pop("output_count")
+        result["image_shapes"] = [[3, 1024, 1024], None, None, None]
         errors = contract_errors(result)
         self.assertTrue(any("output_count" in error for error in errors))
 

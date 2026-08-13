@@ -11,6 +11,8 @@ import time
 import traceback
 from pathlib import Path
 
+import torch
+
 from benchmarks.flux1_schnell.flux_prompt_bank import prompt_digest, request_prompts
 
 
@@ -155,8 +157,8 @@ def main() -> None:
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--precision", choices=("bf16", "nvfp4"), required=True)
     parser.add_argument("--batches", type=int, nargs="+", required=True)
-    parser.add_argument("--warmup", type=int, default=1)
-    parser.add_argument("--iterations", type=int, default=5)
+    parser.add_argument("--warmup", type=int, default=2)
+    parser.add_argument("--iterations", type=int, default=20)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--height", type=int, default=1024)
     parser.add_argument("--width", type=int, default=1024)
@@ -200,20 +202,21 @@ def main() -> None:
     run_dir = args.output_dir / f"visualgen-{args.precision}"
     run_dir.mkdir(parents=True, exist_ok=True)
 
+    import tensorrt_llm
     from tensorrt_llm import VisualGen, VisualGenArgs
 
-    environment = {}
+    environment = {
+        "torch": torch.__version__,
+        "cuda": torch.version.cuda,
+    }
     try:
-        import torch
-        import tensorrt_llm
-
-        environment = {
-            "torch": torch.__version__,
-            "cuda": torch.version.cuda,
-            "gpu": torch.cuda.get_device_name(0),
-            "tensorrt_llm": tensorrt_llm.__version__,
-        }
-    except Exception as exc:
+        environment.update(
+            {
+                "gpu": torch.cuda.get_device_name(0),
+                "tensorrt_llm": tensorrt_llm.__version__,
+            }
+        )
+    except (AttributeError, RuntimeError) as exc:
         environment["inspection_error"] = repr(exc)
 
     engine_args = VisualGenArgs.from_yaml(str(args.config))
@@ -293,11 +296,11 @@ def main() -> None:
                         outputs, image_shapes, image_count = validate_outputs(
                             raw_output, batch, args.batch_semantics
                         )
-                        metrics = outputs[0].metrics
-                        generation_latencies.append(metrics.generation)
-                        pre_denoise.append(metrics.pre_denoise)
-                        denoise.append(metrics.denoise)
-                        post_denoise.append(metrics.post_denoise)
+                        for output in outputs:
+                            generation_latencies.append(output.metrics.generation)
+                            pre_denoise.append(output.metrics.pre_denoise)
+                            denoise.append(output.metrics.denoise)
+                            post_denoise.append(output.metrics.post_denoise)
                 finally:
                     if args.nsys_capture:
                         torch.cuda.synchronize()

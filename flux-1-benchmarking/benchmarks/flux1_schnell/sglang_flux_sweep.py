@@ -98,8 +98,11 @@ def run_request_batch(
 
     async def send_requests() -> list[Any]:
         return list(
-            await asyncio.gather(
-                *(scheduler_client.forward(request) for request in requests)
+            await asyncio.wait_for(
+                asyncio.gather(
+                    *(scheduler_client.forward(request) for request in requests)
+                ),
+                timeout=args.request_timeout_seconds,
             )
         )
 
@@ -168,6 +171,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--max-sequence-length", type=int, default=256)
     parser.add_argument("--batching-delay-ms", type=float, default=100.0)
+    parser.add_argument("--request-timeout-seconds", type=float, default=600.0)
     parser.add_argument("--attention-backend", default="torch_sdpa")
     parser.add_argument(
         "--nsys-capture",
@@ -194,34 +198,50 @@ def main() -> None:
         "api": "sglang.multimodal_gen.DiffGenerator",
     }
 
-    load_started = time.perf_counter()
-    engine = DiffGenerator.from_pretrained(
-        model_path=str(args.model),
-        local_mode=True,
-        performance_mode="speed",
-        dit_cpu_offload=False,
-        text_encoder_cpu_offload=False,
-        vae_cpu_offload=False,
-        enable_torch_compile=True,
-        attention_backend=args.attention_backend,
-        batching_mode="dynamic",
-        batching_max_size=max(args.batches),
-        batching_delay_ms=args.batching_delay_ms,
-        enable_batching_metrics=True,
-        dit_precision="bf16",
-        vae_precision="bf16",
-        output_path=None,
-    )
-    load_seconds = time.perf_counter() - load_started
     load_result = {
-        "status": "ok",
+        "status": "error",
         "backend": "sglang",
         "mode": MODE,
         "environment": runtime_environment,
-        "api_load_seconds": load_seconds,
         "batching_max_size": max(args.batches),
         "batching_delay_ms": args.batching_delay_ms,
     }
+    load_started = time.perf_counter()
+    try:
+        engine = DiffGenerator.from_pretrained(
+            model_path=str(args.model),
+            local_mode=True,
+            performance_mode="speed",
+            dit_cpu_offload=False,
+            text_encoder_cpu_offload=False,
+            vae_cpu_offload=False,
+            enable_torch_compile=True,
+            attention_backend=args.attention_backend,
+            batching_mode="dynamic",
+            batching_max_size=max(args.batches),
+            batching_delay_ms=args.batching_delay_ms,
+            enable_batching_metrics=True,
+            dit_precision="bf16",
+            vae_precision="bf16",
+            output_path=None,
+        )
+    except Exception as exc:
+        load_result.update(
+            {
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+                "traceback": traceback.format_exc(),
+            }
+        )
+        (run_dir / "load.json").write_text(json.dumps(load_result, indent=2) + "\n")
+        print(json.dumps(load_result, indent=2), flush=True)
+        raise
+    load_result.update(
+        {
+            "status": "ok",
+            "api_load_seconds": time.perf_counter() - load_started,
+        }
+    )
     (run_dir / "load.json").write_text(json.dumps(load_result, indent=2) + "\n")
     print(json.dumps(load_result, indent=2), flush=True)
 
@@ -244,6 +264,7 @@ def main() -> None:
                 "iterations": args.iterations,
                 "batch_semantics": "request-batch",
                 "batching_delay_ms": args.batching_delay_ms,
+                "request_timeout_seconds": args.request_timeout_seconds,
                 "prompt_count": batch,
                 "images_per_prompt": 1,
                 "prompt_sha256": prompt_digest(prompts),
@@ -324,9 +345,13 @@ def main() -> None:
             if result["status"] != "ok":
                 raise RuntimeError(f"Batch {batch} failed: {result.get('error')}")
     finally:
-        async_scheduler_client.close()
-        event_loop.close()
-        engine.shutdown()
+        try:
+            async_scheduler_client.close()
+        finally:
+            try:
+                engine.shutdown()
+            finally:
+                event_loop.close()
 
 
 if __name__ == "__main__":

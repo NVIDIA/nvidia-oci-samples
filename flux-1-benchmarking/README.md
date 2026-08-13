@@ -111,6 +111,13 @@ that range in Nsight to focus on the exact calls. The unified CLI executes the
 backend in the profiler's target process; no `sitecustomize.py` or worker hook is
 used. Run one batch size per offline profile.
 
+`benchmarks.flux1_schnell.flux_t2i_trt11` also preserves the public BFL
+`Fire(main)` entry point for direct invocation. For that compatibility path,
+set `FLUX_NSYS_WARMUP_SAMPLES` and `FLUX_NSYS_MEASURED_SAMPLES` to positive
+sample counts to start capture after the requested warmup saves and stop it
+after the measured saves. The unified `benchmark.py` launcher does not use
+those variables; it brackets its measured loop directly with the CUDA profiler API.
+
 Example for SGLang B1 with two warmups and five measured calls:
 
 ```bash

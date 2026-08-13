@@ -50,7 +50,7 @@ run_step() {
       "$@"
 }
 
-run_step "$PYTHON_BIN" benchmark.py \
+run_step "$PYTHON_BIN" "$REPO_ROOT/benchmark.py" \
   --mode hf-diffusers-bf16-compile \
   --model "$MODEL_DIR" \
   --batches 1 \

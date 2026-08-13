@@ -11,7 +11,7 @@ This directory contains NVIDIA-authored Apache-2.0 benchmark code and limited ad
 - Files adapted: `benchmarks/flux1_schnell/flux_batch_sweep.py` and `benchmarks/flux1_schnell/flux_t2i_trt11.py`
 - Upstream source areas: `src/flux/cli.py`, `src/flux/trt/engine/base_engine.py`, `src/flux/trt/trt_config/base_trt_config.py`, and `src/flux/trt/trt_manager.py`
 - License: Apache License 2.0; see [`third_party/licenses/Apache-2.0.txt`](third_party/licenses/Apache-2.0.txt)
-- Copyright: Copyright (c) 1993-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+- Copyright and authorship: The adapted TensorRT integration areas identify Copyright (c) 1993-2025 NVIDIA CORPORATION & AFFILIATES. All rights reserved. The upstream FLUX project identifies Black Forest Labs as the project author.
 
 ### TorchAO
 

@@ -1,4 +1,4 @@
-*FLUX.1-schnell inference on one GB300 — fair comparison summary*
+# FLUX.1-schnell inference on one GB300 — fair comparison summary
 
 *Workload and measurement contract*
 

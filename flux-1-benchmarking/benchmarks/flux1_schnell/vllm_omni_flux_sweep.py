@@ -123,6 +123,10 @@ def main() -> None:
         help="Capture warmup and measured offline API calls via an NVTX range",
     )
     args = parser.parse_args()
+    if any(batch < 1 for batch in args.batches):
+        parser.error("--batches values must be positive")
+    if args.iterations < 1:
+        parser.error("--iterations must be positive")
     if args.nsys_capture and len(args.batches) != 1:
         parser.error("--nsys-capture requires exactly one batch size")
 
@@ -140,34 +144,64 @@ def main() -> None:
         "api": "vllm_omni.entrypoints.omni.Omni",
     }
 
-    load_started = time.perf_counter()
-    omni = Omni(
-        model=str(args.model),
-        mode="text-to-image",
-        max_num_seqs=max(args.batches),
-        request_batch_max_wait_ms=args.request_batch_max_wait_ms,
-        default_sampling_params={
-            "0": {"max_sequence_length": args.max_sequence_length}
-        },
-        log_stats=False,
-        init_timeout=int(args.init_timeout),
-        stage_init_timeout=int(args.init_timeout),
-    )
-    load_seconds = time.perf_counter() - load_started
-    model_class_name = get_model_class_name(omni)
     load_result = {
-        "status": "ok",
+        "status": "error",
         "backend": "vllm-omni",
         "mode": MODE,
         "environment": runtime_environment,
-        "api_load_seconds": load_seconds,
         "max_num_seqs": max(args.batches),
         "request_batch_max_wait_ms": args.request_batch_max_wait_ms,
     }
-    (run_dir / "load.json").write_text(json.dumps(load_result, indent=2) + "\n")
-    print(json.dumps(load_result, indent=2), flush=True)
+    load_started = time.perf_counter()
+    try:
+        omni = Omni(
+            model=str(args.model),
+            mode="text-to-image",
+            max_num_seqs=max(args.batches),
+            request_batch_max_wait_ms=args.request_batch_max_wait_ms,
+            default_sampling_params={
+                "0": {"max_sequence_length": args.max_sequence_length}
+            },
+            log_stats=False,
+            init_timeout=int(args.init_timeout),
+            stage_init_timeout=int(args.init_timeout),
+        )
+    except Exception as exc:
+        load_result.update(
+            {
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+                "traceback": traceback.format_exc(),
+            }
+        )
+        (run_dir / "load.json").write_text(json.dumps(load_result, indent=2) + "\n")
+        print(json.dumps(load_result, indent=2), flush=True)
+        raise
 
     try:
+        try:
+            model_class_name = get_model_class_name(omni)
+        except Exception as exc:
+            load_result.update(
+                {
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                    "traceback": traceback.format_exc(),
+                }
+            )
+            (run_dir / "load.json").write_text(
+                json.dumps(load_result, indent=2) + "\n"
+            )
+            print(json.dumps(load_result, indent=2), flush=True)
+            raise
+        load_result.update(
+            {
+                "status": "ok",
+                "api_load_seconds": time.perf_counter() - load_started,
+            }
+        )
+        (run_dir / "load.json").write_text(json.dumps(load_result, indent=2) + "\n")
+        print(json.dumps(load_result, indent=2), flush=True)
         for batch in args.batches:
             prompts = request_prompts(batch)
             result = {
