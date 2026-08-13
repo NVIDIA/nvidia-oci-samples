@@ -100,6 +100,50 @@ class OfflineApiRunnerTest(unittest.TestCase):
                 self.assertEqual(raised.exception.code, 2)
                 self.assertIn(expected_error, stderr.getvalue())
 
+    def test_visualgen_rejects_nonpositive_workloads_before_import(self):
+        with mock.patch.dict(sys.modules, {"torch": types.ModuleType("torch")}):
+            from benchmarks.flux1_schnell import visualgen_flux_sweep
+
+        cases = (
+            (["--batches", "0"], "--batches values must be positive"),
+            (["--batches", "-1"], "--batches values must be positive"),
+            (
+                ["--batches", "1", "--iterations", "0"],
+                "--iterations must be positive",
+            ),
+            (
+                ["--batches", "1", "--iterations", "-1"],
+                "--iterations must be positive",
+            ),
+            (
+                ["--batches", "1", "--warmup", "-1"],
+                "--warmup must be non-negative",
+            ),
+        )
+        for workload_args, expected_error in cases:
+            with self.subTest(workload_args=workload_args):
+                stderr = io.StringIO()
+                argv = [
+                    "visualgen_flux_sweep.py",
+                    "--model",
+                    "/models/flux",
+                    "--config",
+                    "/configs/visualgen.yaml",
+                    "--precision",
+                    "bf16",
+                    *workload_args,
+                    "--output-dir",
+                    "/results",
+                ]
+                with (
+                    mock.patch.object(sys, "argv", argv),
+                    mock.patch.object(sys, "stderr", stderr),
+                    self.assertRaises(SystemExit) as raised,
+                ):
+                    visualgen_flux_sweep.main()
+                self.assertEqual(raised.exception.code, 2)
+                self.assertIn(expected_error, stderr.getvalue())
+
     def test_vllm_omni_records_lookup_failure_and_closes_engine(self):
         class FakeOmni:
             instance = None

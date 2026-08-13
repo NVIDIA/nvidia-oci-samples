@@ -198,6 +198,13 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    if any(batch < 1 for batch in args.batches):
+        parser.error("--batches values must be positive")
+    if args.iterations < 1:
+        parser.error("--iterations must be positive")
+    if args.warmup < 0:
+        parser.error("--warmup must be non-negative")
+
     args.output_dir.mkdir(parents=True, exist_ok=True)
     run_dir = args.output_dir / f"visualgen-{args.precision}"
     run_dir.mkdir(parents=True, exist_ok=True)
