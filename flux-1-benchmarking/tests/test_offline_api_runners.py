@@ -75,6 +75,10 @@ class OfflineApiRunnerTest(unittest.TestCase):
                 ["--batches", "1", "--iterations", "-1"],
                 "--iterations must be positive",
             ),
+            (
+                ["--batches", "1", "--warmup", "-1"],
+                "--warmup must be non-negative",
+            ),
         )
         for workload_args, expected_error in cases:
             with self.subTest(workload_args=workload_args):

@@ -127,6 +127,8 @@ def main() -> None:
         parser.error("--batches values must be positive")
     if args.iterations < 1:
         parser.error("--iterations must be positive")
+    if args.warmup < 0:
+        parser.error("--warmup must be non-negative")
     if args.nsys_capture and len(args.batches) != 1:
         parser.error("--nsys-capture requires exactly one batch size")
 
