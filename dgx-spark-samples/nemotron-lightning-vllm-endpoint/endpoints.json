@@ -1,0 +1,88 @@
+{
+  "_comment": [
+    "Endpoints for run_benchmark.py. API keys come from the environment -- never commit one.",
+    "",
+    "Every hosted model below is on the PUBLIC NVIDIA API catalog at",
+    "integrate.api.nvidia.com, reachable by anyone with a free NGC personal API key",
+    "from build.nvidia.com. That is deliberate: this sample has to be reproducible by",
+    "people outside NVIDIA, so it does not use any NVIDIA-internal inference service.",
+    "If you work at NVIDIA and want to use an internal one instead, copy this file,",
+    "change base_url, and keep the copy local -- endpoints-*.json is gitignored for",
+    "exactly that.",
+    "",
+    "Model ids are the catalog's own, as shown on each build.nvidia.com model card.",
+    "Internal services generally use different ids, carrying a provider prefix.",
+    "",
+    "Concurrency is deliberately low: an earlier sweep at concurrency 4 tripped a",
+    "gateway rate limit and four of eight models returned HTTP 429 on every call.",
+    "The free catalog tier is rate limited too, so keep this modest.",
+    "",
+    "max_tokens, concurrency and timeout are all per-endpoint. Free-tier catalog",
+    "endpoints queue: one measured 264 s to return 17 tokens, which is wait rather",
+    "than generation. For those, raise concurrency to overlap the waits and raise",
+    "timeout so a queue length is not mistaken for a dead model. Lowering max_tokens",
+    "does not help when the time is spent queueing.",
+    "max_attempts is the retry budget per request. Free-tier endpoints rate-limit on",
+    "request count; the runner honours Retry-After when the gateway sends it, and",
+    "never retries a 400 -- a malformed request fails the same way eight times."
+  ],
+  "endpoints": [
+    {
+      "name": "spark",
+      "location": "DGX Spark (local)",
+      "base_url": "http://localhost:8000/v1",
+      "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4",
+      "api_key_env": null,
+      "concurrency": 4,
+      "max_tokens": 8192,
+      "_note": "Matched to nemotron-hosted so the local-vs-hosted control is a fair one. At the 3072 default this reasoning model exhausted its budget on three examples: a correct decision, but no tool call and no text, which reads as a silent failure and understates the local result."
+    },
+    {
+      "name": "nemotron-hosted",
+      "location": "NVIDIA API catalog",
+      "base_url": "https://integrate.api.nvidia.com/v1",
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "api_key_env": "NVIDIA_API_KEY",
+      "concurrency": 2,
+      "max_tokens": 8192,
+      "_note": "The control: same model as the Spark endpoint, someone else's hardware.",
+      "timeout": 300,
+      "max_attempts": 8
+    },
+    {
+      "name": "gpt-oss-120b",
+      "location": "NVIDIA API catalog",
+      "base_url": "https://integrate.api.nvidia.com/v1",
+      "model": "openai/gpt-oss-120b",
+      "api_key_env": "NVIDIA_API_KEY",
+      "concurrency": 2,
+      "max_tokens": 4096,
+      "timeout": 300,
+      "max_attempts": 8
+    },
+    {
+      "name": "gemma-4-31b",
+      "location": "NVIDIA API catalog",
+      "base_url": "https://integrate.api.nvidia.com/v1",
+      "model": "google/gemma-4-31b-it",
+      "api_key_env": "NVIDIA_API_KEY",
+      "concurrency": 4,
+      "max_tokens": 8192,
+      "_note": "Dense 31B. Latency on the free tier is bimodal -- measured at both 1.7 s and 264 s for the same trivial request, so the slow case is queueing rather than compute. Concurrency 4 absorbs a queue without bursting hard against a shared endpoint.",
+      "timeout": 600,
+      "max_attempts": 8
+    },
+    {
+      "name": "kimi-k3",
+      "location": "NVIDIA API catalog",
+      "base_url": "https://integrate.api.nvidia.com/v1",
+      "model": "moonshotai/kimi-k3",
+      "api_key_env": "NVIDIA_API_KEY",
+      "concurrency": 2,
+      "max_tokens": 8192,
+      "timeout": 600,
+      "_note": "Rate limits on request count, so concurrency does not buy throughput. Left at 2 with a deeper retry budget: one of six failed in the smoke run, and a complete row is worth the wall-clock time.",
+      "max_attempts": 12
+    }
+  ]
+}
