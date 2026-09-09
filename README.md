@@ -31,6 +31,8 @@ These samples are provided as community examples and are not covered by NVIDIA E
 - The OCI CLI installed and configured, or access to the OCI Console
 - Additional, sample-specific prerequisites are documented in each sample's own README
 
+> Samples under [`dgx-spark-samples/`](./dgx-spark-samples) run on local DGX Spark hardware and require no OCI account or cloud GPU shapes.
+
 ## Quickstart
 
 1. Clone this repository:
@@ -49,6 +51,8 @@ Samples are organized by OCI service:
   - `aiq-2.0/` — NVIDIA AIQ 2.0 on OKE *(coming soon)*
 - [`generative-ai-samples/`](./generative-ai-samples) — Samples for NVIDIA generative AI workflows on OCI.
   - [`agentic-multimodal-expense-intelligence/`](./generative-ai-samples/agentic-multimodal-expense-intelligence/) — Nemotron Parse + Omni receipt intelligence with NemoClaw-style governance controls.
+- [`dgx-spark-samples/`](./dgx-spark-samples) — Samples that run locally on NVIDIA DGX Spark (GB10). No OCI account required.
+  - [`nemotron-lightning-vllm-endpoint/`](./dgx-spark-samples/nemotron-lightning-vllm-endpoint/) — Nemotron 3.5 Lightning served as a private OpenAI-compatible endpoint, with a reproducible When2Call agentic benchmark.
 
 Additional samples will be added over time.
 

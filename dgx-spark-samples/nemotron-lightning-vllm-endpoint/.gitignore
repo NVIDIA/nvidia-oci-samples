@@ -1,0 +1,29 @@
+# Sample-specific ignores. The repository root .gitignore already covers
+# __pycache__, .DS_Store, editor state and virtualenvs; git applies the nearest
+# file, and a per-sample file adds to the root rather than replacing it.
+
+# Raw per-request benchmark records written by `run_benchmark.py --save-raw`.
+# Useful locally for inspecting individual misses; too large and too noisy to
+# version. The scored summary in results/summary.json is what gets committed.
+results/raw-*.jsonl
+
+# Credentials never belong here. endpoints.json reads keys from the environment
+# (NVIDIA_API_KEY), so nothing secret should ever appear in this directory.
+.env
+*.key
+
+# Virtual environment created by setup.sh. DGX OS ships a PEP 668
+# externally-managed Python, so the sample installs into .venv rather than
+# system site-packages.
+.venv/
+
+# Notebook checkpoints — demo.ipynb is committed with outputs cleared.
+.ipynb_checkpoints/
+
+# Alternate endpoint configs. The committed endpoints.json points only at the
+# public NVIDIA API catalog, so anyone can reproduce the sweep. NVIDIA staff
+# using an internal inference service keep that variant here, uncommitted.
+endpoints-*.json
+
+# Scratch output from a smoke run: ./run_benchmark.py --n 2 --out results/smoke.json
+results/smoke*.json

@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# Client-side only. vLLM itself runs in the container (see serve.sh).
+openai>=1.40.0
+huggingface_hub>=0.24.0
+requests>=2.31.0
+
+# Notebook
+jupyterlab>=4.0.0
+ipywidgets>=8.1.0
+ipykernel>=6.29.0
+
+# Benchmark (when2call.py / run_benchmark.py / make_chart.py)
+datasets>=2.19.0
+matplotlib>=3.8.0

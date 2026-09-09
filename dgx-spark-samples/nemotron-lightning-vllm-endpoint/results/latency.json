@@ -1,0 +1,85 @@
+{
+  "generated": "2026-09-03 02:23:11 UTC",
+  "prompt": "In one sentence, what is a GPU?",
+  "max_tokens": 128,
+  "samples_requested": 5,
+  "deadline_s": 300.0,
+  "endpoints": [
+    {
+      "name": "spark",
+      "location": "DGX Spark (local)",
+      "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4",
+      "samples": 5,
+      "errors": 0,
+      "ttft_ms": {
+        "median": 57.5,
+        "min": 56.3,
+        "max": 57.7
+      },
+      "decode_tok_s": {
+        "median": 82.8,
+        "min": 82.8,
+        "max": 82.9
+      },
+      "decode_exact": true
+    },
+    {
+      "name": "nemotron-hosted",
+      "location": "NVIDIA API catalog",
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "samples": 5,
+      "errors": 0,
+      "ttft_ms": {
+        "median": 348.6,
+        "min": 309.0,
+        "max": 8254.3
+      },
+      "decode_tok_s": {
+        "median": 54.5,
+        "min": 34.8,
+        "max": 107.2
+      },
+      "decode_exact": true
+    },
+    {
+      "name": "gpt-oss-120b",
+      "location": "NVIDIA API catalog",
+      "model": "openai/gpt-oss-120b",
+      "samples": 5,
+      "errors": 0,
+      "ttft_ms": {
+        "median": 775.3,
+        "min": 397.7,
+        "max": 1902.9
+      },
+      "decode_tok_s": {
+        "median": 155.2,
+        "min": 150.1,
+        "max": 161.0
+      },
+      "decode_exact": true
+    },
+    {
+      "name": "gemma-4-31b",
+      "location": "NVIDIA API catalog",
+      "model": "google/gemma-4-31b-it",
+      "samples": 4,
+      "errors": 1,
+      "ttft_ms": {
+        "median": 9920.7,
+        "min": 1156.7,
+        "max": 213663.9
+      },
+      "decode_tok_s": {
+        "median": 32.3,
+        "min": 26.4,
+        "max": 63.9
+      },
+      "decode_exact": true
+    },
+    {
+      "name": "kimi-k3",
+      "skipped": "queued longer than 300s \u2014 not measurable right now"
+    }
+  ]
+}

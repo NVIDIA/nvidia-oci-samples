@@ -1,0 +1,325 @@
+{
+  "n_examples": 120,
+  "max_tokens_default": 3072,
+  "seed": 0,
+  "generated": "2026-09-02 (UTC) \u2014 hosted endpoints 16:02Z; spark re-run 21:13Z at max_tokens 8192 to match the hosted control",
+  "dataset": {
+    "repo": "nvidia/When2Call",
+    "config": "test",
+    "split": "mcq",
+    "usable_rows": 3394,
+    "by_label": {
+      "tool_call": 1295,
+      "request_for_info": 1062,
+      "cannot_answer": 1037
+    }
+  },
+  "models": [
+    {
+      "n_scored": 120,
+      "n_errors": 0,
+      "decision_accuracy": {
+        "k": 101,
+        "n": 120,
+        "rate": 0.8416666666666667,
+        "lo": 0.7659051081885379,
+        "hi": 0.8962310399232437
+      },
+      "actionable_decision_accuracy": {
+        "k": 101,
+        "n": 120,
+        "rate": 0.8416666666666667,
+        "lo": 0.7659051081885379,
+        "hi": 0.8962310399232437
+      },
+      "tool_selection_accuracy": {
+        "k": 34,
+        "n": 35,
+        "rate": 0.9714285714285714,
+        "lo": 0.8546659090672868,
+        "hi": 0.9949386386341466
+      },
+      "over_call_rate": {
+        "k": 14,
+        "n": 80,
+        "rate": 0.175,
+        "lo": 0.10720538981609887,
+        "hi": 0.2725774387558749
+      },
+      "per_label": {
+        "tool_call": {
+          "k": 35,
+          "n": 40,
+          "rate": 0.875,
+          "lo": 0.7388757932976187,
+          "hi": 0.9454058022645873
+        },
+        "request_for_info": {
+          "k": 31,
+          "n": 40,
+          "rate": 0.775,
+          "lo": 0.6249660359590695,
+          "hi": 0.8768404674532148
+        },
+        "cannot_answer": {
+          "k": 35,
+          "n": 40,
+          "rate": 0.875,
+          "lo": 0.7388757932976187,
+          "hi": 0.9454058022645873
+        }
+      },
+      "name": "spark",
+      "model": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4",
+      "location": "DGX Spark (local)",
+      "elapsed_s": 693.3,
+      "concurrency": 4,
+      "max_tokens": 8192
+    },
+    {
+      "n_scored": 120,
+      "n_errors": 0,
+      "decision_accuracy": {
+        "k": 101,
+        "n": 120,
+        "rate": 0.8416666666666667,
+        "lo": 0.7659051081885379,
+        "hi": 0.8962310399232437
+      },
+      "actionable_decision_accuracy": {
+        "k": 101,
+        "n": 120,
+        "rate": 0.8416666666666667,
+        "lo": 0.7659051081885379,
+        "hi": 0.8962310399232437
+      },
+      "tool_selection_accuracy": {
+        "k": 36,
+        "n": 37,
+        "rate": 0.972972972972973,
+        "lo": 0.8617562156243666,
+        "hi": 0.9952131489450924
+      },
+      "over_call_rate": {
+        "k": 16,
+        "n": 80,
+        "rate": 0.2,
+        "lo": 0.1270273637929335,
+        "hi": 0.3004644779658116
+      },
+      "per_label": {
+        "tool_call": {
+          "k": 37,
+          "n": 40,
+          "rate": 0.925,
+          "lo": 0.8013546984090248,
+          "hi": 0.9741644432281419
+        },
+        "request_for_info": {
+          "k": 30,
+          "n": 40,
+          "rate": 0.75,
+          "lo": 0.598057409330299,
+          "hi": 0.8581303210445048
+        },
+        "cannot_answer": {
+          "k": 34,
+          "n": 40,
+          "rate": 0.85,
+          "lo": 0.7092737396097997,
+          "hi": 0.9293890829149256
+        }
+      },
+      "name": "nemotron-hosted",
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "location": "NVIDIA API catalog",
+      "elapsed_s": 1664.6,
+      "concurrency": 2,
+      "max_tokens": 8192
+    },
+    {
+      "n_scored": 120,
+      "n_errors": 0,
+      "decision_accuracy": {
+        "k": 100,
+        "n": 120,
+        "rate": 0.8333333333333334,
+        "lo": 0.756545606089762,
+        "hi": 0.8894408798729518
+      },
+      "actionable_decision_accuracy": {
+        "k": 100,
+        "n": 120,
+        "rate": 0.8333333333333334,
+        "lo": 0.756545606089762,
+        "hi": 0.8894408798729518
+      },
+      "tool_selection_accuracy": {
+        "k": 31,
+        "n": 31,
+        "rate": 1.0,
+        "lo": 0.889740999265246,
+        "hi": 0.9999999999999999
+      },
+      "over_call_rate": {
+        "k": 11,
+        "n": 80,
+        "rate": 0.1375,
+        "lo": 0.07854633679551142,
+        "hi": 0.22967297199630554
+      },
+      "per_label": {
+        "tool_call": {
+          "k": 31,
+          "n": 40,
+          "rate": 0.775,
+          "lo": 0.6249660359590695,
+          "hi": 0.8768404674532148
+        },
+        "request_for_info": {
+          "k": 32,
+          "n": 40,
+          "rate": 0.8,
+          "lo": 0.6524239261814333,
+          "hi": 0.8950013502683314
+        },
+        "cannot_answer": {
+          "k": 37,
+          "n": 40,
+          "rate": 0.925,
+          "lo": 0.8013546984090248,
+          "hi": 0.9741644432281419
+        }
+      },
+      "name": "gpt-oss-120b",
+      "model": "openai/gpt-oss-120b",
+      "location": "NVIDIA API catalog",
+      "elapsed_s": 165.5,
+      "concurrency": 2,
+      "max_tokens": 4096
+    },
+    {
+      "n_scored": 120,
+      "n_errors": 0,
+      "decision_accuracy": {
+        "k": 85,
+        "n": 120,
+        "rate": 0.7083333333333334,
+        "lo": 0.6215559807865156,
+        "hi": 0.7821855729401805
+      },
+      "actionable_decision_accuracy": {
+        "k": 85,
+        "n": 120,
+        "rate": 0.7083333333333334,
+        "lo": 0.6215559807865156,
+        "hi": 0.7821855729401805
+      },
+      "tool_selection_accuracy": {
+        "k": 39,
+        "n": 39,
+        "rate": 1.0,
+        "lo": 0.9103301463997611,
+        "hi": 1.0
+      },
+      "over_call_rate": {
+        "k": 34,
+        "n": 80,
+        "rate": 0.425,
+        "lo": 0.32256388014807325,
+        "hi": 0.534309080291613
+      },
+      "per_label": {
+        "tool_call": {
+          "k": 39,
+          "n": 40,
+          "rate": 0.975,
+          "lo": 0.8711834051199223,
+          "hi": 0.9955732825922052
+        },
+        "request_for_info": {
+          "k": 25,
+          "n": 40,
+          "rate": 0.625,
+          "lo": 0.47032160054531913,
+          "hi": 0.7577722646420829
+        },
+        "cannot_answer": {
+          "k": 21,
+          "n": 40,
+          "rate": 0.525,
+          "lo": 0.37497106853929735,
+          "hi": 0.6706477044981831
+        }
+      },
+      "name": "gemma-4-31b",
+      "model": "google/gemma-4-31b-it",
+      "location": "NVIDIA API catalog",
+      "elapsed_s": 1816.3,
+      "concurrency": 4,
+      "max_tokens": 8192
+    },
+    {
+      "n_scored": 120,
+      "n_errors": 0,
+      "decision_accuracy": {
+        "k": 100,
+        "n": 120,
+        "rate": 0.8333333333333334,
+        "lo": 0.756545606089762,
+        "hi": 0.8894408798729518
+      },
+      "actionable_decision_accuracy": {
+        "k": 100,
+        "n": 120,
+        "rate": 0.8333333333333334,
+        "lo": 0.756545606089762,
+        "hi": 0.8894408798729518
+      },
+      "tool_selection_accuracy": {
+        "k": 35,
+        "n": 36,
+        "rate": 0.9722222222222222,
+        "lo": 0.8582996626496918,
+        "hi": 0.9950797197044302
+      },
+      "over_call_rate": {
+        "k": 16,
+        "n": 80,
+        "rate": 0.2,
+        "lo": 0.1270273637929335,
+        "hi": 0.3004644779658116
+      },
+      "per_label": {
+        "tool_call": {
+          "k": 36,
+          "n": 40,
+          "rate": 0.9,
+          "lo": 0.7694792561952611,
+          "hi": 0.9604211124044252
+        },
+        "request_for_info": {
+          "k": 29,
+          "n": 40,
+          "rate": 0.725,
+          "lo": 0.5716474916687543,
+          "hi": 0.8389214656685692
+        },
+        "cannot_answer": {
+          "k": 35,
+          "n": 40,
+          "rate": 0.875,
+          "lo": 0.7388757932976187,
+          "hi": 0.9454058022645873
+        }
+      },
+      "name": "kimi-k3",
+      "model": "moonshotai/kimi-k3",
+      "location": "NVIDIA API catalog",
+      "elapsed_s": 6517.5,
+      "concurrency": 2,
+      "max_tokens": 8192
+    }
+  ],
+  "failed": []
+}
