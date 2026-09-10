@@ -130,12 +130,12 @@ Expected `validate.py` output is in [`results/validate-2026-09-09.txt`](./result
 | --- | --- |
 | `preflight.sh` | Checks tools, reports `VM.GPU.A10.2` availability per availability domain, reads the cluster's Kubernetes version. |
 | `cloud-init.sh` | Node bootstrap: `/usr/libexec/oci-growfs -y`, then the standard OKE init script. Passed as `--node-metadata user_data`. |
-| `create-node-pool.sh` | Finds the matching GPU node image for the cluster version, creates the node pool, waits for the node. |
-| `values.yaml` | vLLM Production Stack values: model, image, TP=2, Ampere-friendly backends, tool and reasoning parsers. |
+| `create-node-pool.sh` | Finds the matching GPU node image for the cluster version, creates the node pool labeled `nvidia-oci-samples/pool=<name>`, waits for that pool's node. |
+| `values.yaml` | vLLM Production Stack values: model, image, TP=2, Ampere-friendly backends, tool and reasoning parsers, scheduling pinned to the sample's node pool. |
 | `deploy.sh` | `helm upgrade --install`, waits for rollout, prints the vLLM startup summary. |
-| `validate.py` | Five checks against the OpenAI-compatible endpoint. |
+| `validate.py` | Five checks against the OpenAI-compatible endpoint; exits nonzero if any expectation fails. |
 | `relay_probe.py` | Optional. Sends two requests through NeMo Relay's managed execution and writes an ATIF trajectory. |
-| `cleanup.sh` | Removes the Helm release, the namespace, and the node pool. |
+| `cleanup.sh` | Removes the Helm release, the namespace (only if `deploy.sh` created it), and, after confirmation, the node pool. |
 | `results/` | Outputs captured from the 2026-09-09 run. |
 
 ## Serving Configuration
@@ -155,6 +155,7 @@ vllm serve nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4 \
 - `--mamba-backend flashinfer` is the backend NVIDIA's A100 recipe uses for the Mamba-2 layers.
 - `--kv-cache-dtype fp8` doubles KV capacity; drop it if your vLLM build rejects fp8 KV on your GPUs.
 - `--max-model-len 65536` keeps the sample predictable. The model supports up to 1M tokens; raise the value if you have KV headroom.
+- The router Deployment comes from the chart's defaults. The vLLM engine image is pinned to `v0.27.1`; the router image upstream publishes only as `latest`, so pin it by digest in `values.yaml` if your environment requires immutable references.
 
 ### Reasoning Is On By Default
 
@@ -178,4 +179,4 @@ vLLM 0.27 returns the model's thinking in the `reasoning` field of the message. 
 ./cleanup.sh
 ```
 
-This removes the `lightning` Helm release and namespace and deletes the node pool. The OKE cluster, VCN, and anything else you already had are left untouched.
+This removes the `lightning` Helm release, deletes the namespace only if `deploy.sh` created it, and asks before deleting the node pool. The OKE cluster, VCN, and anything else you already had are left untouched.

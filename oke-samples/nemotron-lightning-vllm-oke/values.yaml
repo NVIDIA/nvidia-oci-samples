@@ -20,22 +20,22 @@ servingEngineSpec:
       shmSize: 20Gi
       # Uncomment to pass a Hugging Face token if you hit download rate limits:
       # hf_token: "hf_..."
+      # Schedule only onto the node pool created by create-node-pool.sh (label value = NODE_POOL_NAME).
       nodeSelectorTerms:
         - matchExpressions:
-            - key: node.kubernetes.io/instance-type
+            - key: nvidia-oci-samples/pool
               operator: In
-              values: [VM.GPU.A10.2]
+              values: [nemotron-lightning-a10x2]
       vllmConfig:
         tensorParallelSize: 2
         maxModelLen: 65536
         gpuMemoryUtilization: 0.92
+        enablePrefixCaching: true
         extraArgs:
           - --moe-backend=marlin
           - --mamba-backend=flashinfer
           - --kv-cache-dtype=fp8
           - --reasoning-parser=nemotron_v3
-          - --enable-prefix-caching
           - --max-num-seqs=32
-routerSpec:
-  repository: docker.io/lmcache/lmstack-router
-  tag: latest
+# The router uses the chart's defaults (lmcache/lmstack-router). Upstream publishes only the
+# `latest` tag for it; pin `routerSpec.tag` to a digest from your own pull if you need immutability.

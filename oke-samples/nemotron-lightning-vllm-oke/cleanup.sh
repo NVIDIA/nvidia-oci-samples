@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
-# Remove what this sample created: the Helm release and namespace, then the GPU node pool.
+# Remove what this sample created: the Helm release, the namespace (only if deploy.sh created it), then the
+# GPU node pool (after confirmation).
 # The OKE cluster, VCN, and anything you already had are left untouched.
 # Requires OCI_REGION, OCI_COMPARTMENT_ID, OKE_CLUSTER_ID. Optional: NODE_POOL_NAME, OCI_CLI_PROFILE, OCI_CLI_AUTH.
 set -euo pipefail
@@ -11,7 +12,12 @@ OCI=(oci --region "$OCI_REGION" ${OCI_CLI_PROFILE:+--profile "$OCI_CLI_PROFILE"}
 RELEASE="${RELEASE:-lightning}"; NAMESPACE="${NAMESPACE:-lightning}"; NODE_POOL_NAME="${NODE_POOL_NAME:-nemotron-lightning-a10x2}"
 
 helm uninstall "$RELEASE" -n "$NAMESPACE" 2>/dev/null || true
-kubectl delete namespace "$NAMESPACE" --ignore-not-found --wait=false
+if kubectl get namespace "$NAMESPACE" -o jsonpath='{.metadata.labels.nvidia-oci-samples/owner}' 2>/dev/null | grep -q '^nemotron-lightning-vllm-oke$'; then
+  kubectl delete namespace "$NAMESPACE" --wait=false
+  echo "namespace $NAMESPACE deleted (created by this sample)"
+else
+  echo "namespace $NAMESPACE was not created by this sample; left in place"
+fi
 
 POOL_ID=$("${OCI[@]}" ce node-pool list --cluster-id "$OKE_CLUSTER_ID" --compartment-id "$OCI_COMPARTMENT_ID" \
   --query "data[?name=='$NODE_POOL_NAME' && \"lifecycle-state\"!='DELETED'].id | [0]" --raw-output)

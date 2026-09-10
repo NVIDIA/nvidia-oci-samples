@@ -8,6 +8,7 @@ Override the base URL with ENDPOINT (default http://127.0.0.1:8000/v1).
 
 import json
 import os
+import sys
 import time
 
 import requests
@@ -15,6 +16,14 @@ import requests
 BASE = os.environ.get("ENDPOINT", "http://127.0.0.1:8000/v1")
 MODEL = os.environ.get("MODEL", "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4")
 NO_THINK = {"chat_template_kwargs": {"enable_thinking": False}}
+FAILURES: list[str] = []
+
+
+def check(condition: bool, message: str) -> None:
+    """Record a failed expectation; the script exits nonzero if any check fails."""
+    if not condition:
+        FAILURES.append(message)
+        print(f"  FAIL: {message}")
 
 
 def post(payload: dict, **kw):
@@ -22,7 +31,9 @@ def post(payload: dict, **kw):
 
 
 models = requests.get(f"{BASE}/models", timeout=30).json()
-print("models:", [m["id"] for m in models["data"]])
+served = [m["id"] for m in models["data"]]
+print("models:", served)
+check(MODEL in served, f"{MODEL} is not served")
 
 t0 = time.time()
 r = post({"max_tokens": 200, "temperature": 0.0, **NO_THINK,
@@ -31,6 +42,7 @@ r = post({"max_tokens": 200, "temperature": 0.0, **NO_THINK,
 msg = r["choices"][0]["message"]
 usage = {k: r["usage"][k] for k in ("prompt_tokens", "completion_tokens", "total_tokens")}
 print(f"chat ({time.time() - t0:.1f}s): content={msg.get('content')!r} finish={r['choices'][0]['finish_reason']} usage={usage}")
+check("LIGHTNING-OK" in (msg.get("content") or ""), "chat reply does not contain LIGHTNING-OK")
 
 t0 = time.time()
 r = post({"max_tokens": 300, "temperature": 0.0, **NO_THINK,
@@ -40,6 +52,8 @@ r = post({"max_tokens": 300, "temperature": 0.0, **NO_THINK,
               "parameters": {"type": "object", "properties": {"city": {"type": "string"}}, "required": ["city"]}}}]}).json()
 ch = r["choices"][0]
 print(f"tools ({time.time() - t0:.1f}s): finish={ch['finish_reason']} tool_calls={json.dumps(ch['message'].get('tool_calls'))}")
+tool_calls = ch["message"].get("tool_calls") or []
+check(any(c["function"]["name"] == "get_weather" for c in tool_calls), "no structured get_weather tool call returned")
 
 t0 = time.time()
 chunks, text = 0, ""
@@ -50,6 +64,7 @@ with post({"max_tokens": 80, "temperature": 0.0, "stream": True, **NO_THINK,
             chunks += 1
             text += json.loads(line[6:])["choices"][0]["delta"].get("content") or ""
 print(f"stream ({time.time() - t0:.1f}s): {chunks} chunks, text={text.strip()!r}")
+check(chunks > 1 and "1" in text and "10" in text, "streamed response is incomplete")
 
 t0 = time.time()
 r = post({"max_tokens": 600, "temperature": 0.0,
@@ -59,3 +74,9 @@ reasoning = msg.get("reasoning") or msg.get("reasoning_content") or ""
 usage = {k: r["usage"][k] for k in ("prompt_tokens", "completion_tokens", "total_tokens")}
 print(f"reasoning-on ({time.time() - t0:.1f}s): finish={r['choices'][0]['finish_reason']} reasoning={len(reasoning)} chars "
       f"content={str(msg.get('content'))[:80]!r} usage={usage}")
+check(len(reasoning) > 0, "no reasoning trace returned with thinking enabled")
+
+if FAILURES:
+    print(f"\nVALIDATION FAILED: {len(FAILURES)} check(s) failed")
+    sys.exit(1)
+print("\nVALIDATION PASSED")
