@@ -1,0 +1,7 @@
+# validate.py against Nemotron 3.5 Lightning NVFP4 on OKE, 1 x VM.GPU.A10.2, vllm/vllm-openai:v0.27.1
+# Captured 2026-09-09 (us-phoenix-1). Latencies measured from a laptop over kubectl port-forward.
+models: ['nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4']
+chat (0.7s): content='LIGHTNING-OK' finish=stop usage={'prompt_tokens': 27, 'completion_tokens': 6, 'total_tokens': 33}
+tools (0.4s): finish=tool_calls tool_calls=[{"id": "chatcmpl-tool-9c7b34c4e769302a", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"Phoenix\"}"}}]
+stream (0.4s): 31 chunks, text='1, 2, 3, 4, 5, 6, 7, 8, 9, 10'
+reasoning-on (600-token budget): finish=length reasoning=1830 chars content='No, because' usage={'prompt_tokens': 32, 'completion_tokens': 600, 'total_tokens': 632}

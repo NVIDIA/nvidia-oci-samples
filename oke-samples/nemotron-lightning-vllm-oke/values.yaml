@@ -1,0 +1,41 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# NVIDIA Nemotron 3.5 Lightning 30B-A3B (NVFP4) on 1 x VM.GPU.A10.2 (2 x A10 24 GB), tensor parallel 2.
+# Chart: vllm/vllm-stack 0.1.12 (https://github.com/vllm-project/production-stack).
+# Ampere runs the NVFP4 expert weights through Marlin W4A16 kernels (model card: "NVIDIA Ampere via W4A16").
+servingEngineSpec:
+  runtimeClassName: ""
+  modelSpec:
+    - name: nemotron-35-lightning
+      repository: docker.io/vllm/vllm-openai
+      tag: v0.27.1
+      modelURL: nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4
+      enableTool: true
+      toolCallParser: qwen3_coder
+      replicaCount: 1
+      requestCPU: 8
+      requestMemory: 64Gi
+      requestGPU: 2
+      shmSize: 20Gi
+      # Uncomment to pass a Hugging Face token if you hit download rate limits:
+      # hf_token: "hf_..."
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node.kubernetes.io/instance-type
+              operator: In
+              values: [VM.GPU.A10.2]
+      vllmConfig:
+        tensorParallelSize: 2
+        maxModelLen: 65536
+        gpuMemoryUtilization: 0.92
+        extraArgs:
+          - --moe-backend=marlin
+          - --mamba-backend=flashinfer
+          - --kv-cache-dtype=fp8
+          - --reasoning-parser=nemotron_v3
+          - --enable-prefix-caching
+          - --max-num-seqs=32
+routerSpec:
+  repository: docker.io/lmcache/lmstack-router
+  tag: latest
