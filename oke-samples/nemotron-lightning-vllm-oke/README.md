@@ -42,11 +42,12 @@ Nemotron 3.5 Lightning is a 30B-parameter mixture-of-experts model with 3B activ
 | vLLM image | `vllm/vllm-openai:v0.27.1` |
 | GPU KV cache | 1,336,934 tokens (fp8 KV cache) |
 | Max concurrency at 65,536 tokens per request | 20.4x |
-| Chat completion, 6 output tokens, thinking off | 0.7 s |
-| Structured tool call | 0.4 s |
-| Streaming, 31 chunks | 0.4 s |
+| Chat completion, 6 output tokens, thinking off | 0.6 s |
+| Structured tool call | 0.5 s |
+| Streaming, 31 chunks | 0.5 s |
+| Reasoning on, 586 output tokens | 3.4 s |
 
-Numbers come from the run recorded in [`results/`](./results/) on 2026-09-09. They are a single-node reference point, not a benchmark.
+Numbers come from the run recorded in [`results/`](./results/) on 2026-09-10, produced by the scripts in this directory on a freshly created cluster. They are a single-node reference point, not a benchmark.
 
 ## Everything Here Is Open
 
@@ -63,6 +64,7 @@ No NGC subscription or support contract is required.
 
 - An OCI tenancy with quota for `VM.GPU.A10.2` in at least one availability domain of your region. The service limit is `gpu-a10-count`; two GPUs are consumed.
 - An existing OKE cluster (Basic or Enhanced, Kubernetes 1.33 or newer) whose API endpoint you can reach with `kubectl`. The cluster's worker subnet must allow outbound internet access (NAT or Internet Gateway) to pull the vLLM image and the model weights.
+- Somewhere for CoreDNS to run. OKE GPU nodes carry a `nvidia.com/gpu` NoSchedule taint, so on a GPU-only cluster CoreDNS stays Pending and pods cannot resolve names. `deploy.sh` detects that and adds the GPU toleration to CoreDNS and its autoscaler, the same fix as the Nemotron cookbook; if you would rather not touch `kube-system`, add a small CPU node pool first.
 - `oci` CLI configured for your tenancy, plus `kubectl`, `helm` 3, `python3` 3.10 or newer, and `jq`.
 - About 40 minutes end to end: 10 for the node to join, 3 to pull the 10 GB image, 5 to download 21.6 GB of weights, a few for kernel warm-up.
 - A Hugging Face token only if you hit download rate limits (`HF_TOKEN`, passed through the chart's `hf_token` value).
@@ -76,8 +78,7 @@ Your laptop                          OCI region
   kubectl port-forward  ──────────►  OKE cluster (existing)
   OpenAI SDK / curl                    │
                                        ├── namespace: lightning
-                                       │     ├── router Deployment (vllm-stack)  ── Service :80
-                                       │     └── vLLM engine Deployment ─────────── Service :80
+                                       │     └── vLLM engine Deployment ── Service :80 (OpenAI-compatible)
                                        │           model: Nemotron 3.5 Lightning NVFP4
                                        │           --tensor-parallel-size 2
                                        │
@@ -109,7 +110,7 @@ Then:
 In a second terminal, keep a port-forward open:
 
 ```bash
-kubectl -n lightning port-forward svc/lightning-router-service 8000:80
+kubectl -n lightning port-forward svc/lightning-nemotron-35-lightning-engine-service 8000:80
 ```
 
 Back in the first terminal:
@@ -122,7 +123,7 @@ python3 relay_probe.py                 # optional: record the calls as an ATIF t
 ./cleanup.sh                            # helm uninstall + delete the node pool
 ```
 
-Expected `validate.py` output is in [`results/validate-2026-09-09.txt`](./results/validate-2026-09-09.txt).
+Expected `validate.py` output is in [`results/validate-2026-09-10.txt`](./results/validate-2026-09-10.txt).
 
 ## Files
 
@@ -131,12 +132,12 @@ Expected `validate.py` output is in [`results/validate-2026-09-09.txt`](./result
 | `preflight.sh` | Checks tools, reports `VM.GPU.A10.2` availability per availability domain, reads the cluster's Kubernetes version. |
 | `cloud-init.sh` | Node bootstrap: `/usr/libexec/oci-growfs -y`, then the standard OKE init script. Passed as `--node-metadata user_data`. |
 | `create-node-pool.sh` | Finds the matching GPU node image for the cluster version, creates the node pool labeled `nvidia-oci-samples/pool=<name>`, waits for that pool's node with a 20-minute deadline. |
-| `values.yaml` | vLLM Production Stack values: model, image, TP=2, Ampere-friendly backends, tool and reasoning parsers, scheduling pinned to the sample's node pool. |
-| `deploy.sh` | Creates and labels the namespace, refuses to overwrite a release it did not create, `helm upgrade --install` pinned to the pool from `NODE_POOL_NAME`, waits for rollout, prints the vLLM startup summary. |
+| `values.yaml` | vLLM Production Stack values: model, image, TP=2, Ampere-friendly backends, tool and reasoning parsers, scheduling pinned to the sample's node pool, router disabled. |
+| `deploy.sh` | Creates and labels the namespace, makes CoreDNS schedulable on GPU-only clusters, refuses to overwrite a release it did not create, `helm upgrade --install` pinned to the pool from `NODE_POOL_NAME`, waits until the engine is Available, prints the vLLM startup summary. |
 | `validate.py` | Five checks against the OpenAI-compatible endpoint; exits nonzero if any expectation fails. |
 | `relay_probe.py` | Optional. Sends two requests through NeMo Relay's managed execution and writes an ATIF trajectory. |
 | `cleanup.sh` | Removes the Helm release (only the one `deploy.sh` created), the namespace (only if `deploy.sh` created it), and, after confirmation, the node pool. |
-| `results/` | Outputs captured from the 2026-09-09 run. |
+| `results/` | Outputs captured on 2026-09-10 by running these scripts end to end: `validate.py` output, selected vLLM startup log lines, and the Relay trajectory. |
 
 ## Serving Configuration
 
@@ -155,7 +156,7 @@ vllm serve nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4 \
 - `--mamba-backend flashinfer` is the backend NVIDIA's A100 recipe uses for the Mamba-2 layers.
 - `--kv-cache-dtype fp8` doubles KV capacity; drop it if your vLLM build rejects fp8 KV on your GPUs.
 - `--max-model-len 65536` keeps the sample predictable. The model supports up to 1M tokens; raise the value if you have KV headroom.
-- The router Deployment comes from the chart's defaults. The vLLM engine image is pinned to `v0.27.1`; the router image upstream publishes only as `latest`, so pin it by digest in `values.yaml` if your environment requires immutable references.
+- The chart's router is disabled. A single engine needs no routing layer, and the router image carries no toleration for the `nvidia.com/gpu` taint that OKE GPU nodes have, so on a GPU-only pool it stays Pending. Clients talk to the engine Service directly; enable `routerSpec.enableRouter` only if you add a CPU node pool for it.
 
 ### Reasoning Is On By Default
 
@@ -163,11 +164,13 @@ vLLM 0.27 returns the model's thinking in the `reasoning` field of the message. 
 
 ## Observing The Endpoint With NeMo Relay (Optional)
 
-[NVIDIA NeMo Relay](https://github.com/NVIDIA/NeMo-Relay) is an in-process runtime that records and controls model and tool calls. Because the endpoint speaks the OpenAI chat format, Relay recognizes it automatically; `relay_probe.py` wraps two requests in a Relay scope and exports an [ATIF](https://github.com/NVIDIA/NeMo-Relay) trajectory with the model name, per-step token usage, and the structured tool call. The recorded trajectory from the reference run is [`results/relay-trajectory-2026-09-09.json`](./results/relay-trajectory-2026-09-09.json). Requires `nemo-relay>=0.8.4`.
+[NVIDIA NeMo Relay](https://github.com/NVIDIA/NeMo-Relay) is an in-process runtime that records and controls model and tool calls. Because the endpoint speaks the OpenAI chat format, Relay recognizes it automatically; `relay_probe.py` wraps two requests in a Relay scope and exports an [ATIF](https://github.com/NVIDIA/NeMo-Relay) trajectory with the model name, per-step token usage, and the structured tool call. The recorded trajectory from the reference run is [`results/relay-trajectory-2026-09-10.json`](./results/relay-trajectory-2026-09-10.json). Requires `nemo-relay>=0.8.4`.
 
 ## Pitfalls
 
 **Root filesystem is ~30 GB regardless of boot volume size.** OKE node images do not grow the root partition to the requested boot volume unless cloud-init runs `/usr/libexec/oci-growfs`. Without it the node reports about 30 GiB of ephemeral storage, the kubelet raises `DiskPressure` while pulling the 10 GB vLLM image, and the engine pod is evicted with `The node was low on resource: ephemeral-storage`. `cloud-init.sh` runs the grow step before the OKE bootstrap, exactly as Console-created node pools do. If you created the pool without it, recreate it; expanding in place also requires a node reset so the kubelet re-reads capacity.
+
+**GPU-only clusters leave system pods Pending.** The `nvidia.com/gpu` taint on OKE GPU nodes is respected by everything without a matching toleration: CoreDNS, its autoscaler, and the chart's router. Symptoms are `Temporary failure in name resolution` from the engine and pods stuck in `Pending` with `untolerated taint`. `deploy.sh` tolerates the taint for CoreDNS when needed, and the router is disabled; a CPU node pool avoids the issue entirely.
 
 **Capacity is per availability domain.** `VM.GPU.A10.2` may be available in one AD and out of host capacity in another. `preflight.sh` runs a capacity report so you can pick the AD before creating the pool.
 

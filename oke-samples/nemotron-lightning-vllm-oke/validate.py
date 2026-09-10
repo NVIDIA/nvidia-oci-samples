@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 """Validate the Nemotron 3.5 Lightning endpoint: models, chat, structured tool call, streaming, reasoning field.
 
-Run with a port-forward open: kubectl -n lightning port-forward svc/lightning-router-service 8000:80
+Run with a port-forward open: kubectl -n lightning port-forward svc/lightning-nemotron-35-lightning-engine-service 8000:80
 Override the base URL with ENDPOINT (default http://127.0.0.1:8000/v1).
 """
 

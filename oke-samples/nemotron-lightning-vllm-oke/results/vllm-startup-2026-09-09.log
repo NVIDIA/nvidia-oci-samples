@@ -1,9 +1,0 @@
-# Selected vLLM engine log lines from the 2026-09-09 deployment (vllm/vllm-openai:v0.27.1, TP=2, 2 x A10).
-# Image pull: 2m46s. Weights: 52 safetensors shards, 21.6 GB.
-(Worker_TP0) INFO [marlin_utils.py] Marlin kernel can achieve better performance for small size_n with experimental use_atomic_add feature.
-(Worker_TP1) INFO [ssu_dispatch.py] Using flashinfer Mamba SSU backend.
-(Worker_TP0) INFO [ssu_dispatch.py] Using FlashInfer Mamba SSU algorithm: auto
-(Worker_TP0) INFO [flashinfer.py] FlashInfer resolved query dtypes: prefill=torch.bfloat16, decode=torch.bfloat16, decode_backend=flashinfer-native, kv_cache_dtype=torch.float8_e4m3fn
-(EngineCore) INFO [kv_cache_utils.py] GPU KV cache size: 1,336,934 tokens
-(EngineCore) INFO [kv_cache_utils.py] Maximum concurrency for 65,536 tokens per request: 20.40x
-(APIServer) INFO:     Application startup complete.

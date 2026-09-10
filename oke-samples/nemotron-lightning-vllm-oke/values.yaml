@@ -38,5 +38,8 @@ servingEngineSpec:
           - --kv-cache-dtype=fp8
           - --reasoning-parser=nemotron_v3
           - --max-num-seqs=32
-# The router uses the chart's defaults (lmcache/lmstack-router). Upstream publishes only the
-# `latest` tag for it; pin `routerSpec.tag` to a digest from your own pull if you need immutability.
+# A single engine needs no routing layer, and the router image lacks a toleration for the
+# nvidia.com/gpu taint that OKE GPU nodes carry, so it would stay Pending on a GPU-only pool.
+# Clients use the engine Service directly (see README). Enable the router only with a CPU pool.
+routerSpec:
+  enableRouter: false
