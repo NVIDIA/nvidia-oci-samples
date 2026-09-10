@@ -130,12 +130,12 @@ Expected `validate.py` output is in [`results/validate-2026-09-09.txt`](./result
 | --- | --- |
 | `preflight.sh` | Checks tools, reports `VM.GPU.A10.2` availability per availability domain, reads the cluster's Kubernetes version. |
 | `cloud-init.sh` | Node bootstrap: `/usr/libexec/oci-growfs -y`, then the standard OKE init script. Passed as `--node-metadata user_data`. |
-| `create-node-pool.sh` | Finds the matching GPU node image for the cluster version, creates the node pool labeled `nvidia-oci-samples/pool=<name>`, waits for that pool's node. |
+| `create-node-pool.sh` | Finds the matching GPU node image for the cluster version, creates the node pool labeled `nvidia-oci-samples/pool=<name>`, waits for that pool's node with a 20-minute deadline. |
 | `values.yaml` | vLLM Production Stack values: model, image, TP=2, Ampere-friendly backends, tool and reasoning parsers, scheduling pinned to the sample's node pool. |
-| `deploy.sh` | `helm upgrade --install`, waits for rollout, prints the vLLM startup summary. |
+| `deploy.sh` | Creates and labels the namespace, refuses to overwrite a release it did not create, `helm upgrade --install` pinned to the pool from `NODE_POOL_NAME`, waits for rollout, prints the vLLM startup summary. |
 | `validate.py` | Five checks against the OpenAI-compatible endpoint; exits nonzero if any expectation fails. |
 | `relay_probe.py` | Optional. Sends two requests through NeMo Relay's managed execution and writes an ATIF trajectory. |
-| `cleanup.sh` | Removes the Helm release, the namespace (only if `deploy.sh` created it), and, after confirmation, the node pool. |
+| `cleanup.sh` | Removes the Helm release (only the one `deploy.sh` created), the namespace (only if `deploy.sh` created it), and, after confirmation, the node pool. |
 | `results/` | Outputs captured from the 2026-09-09 run. |
 
 ## Serving Configuration

@@ -53,8 +53,18 @@ echo "waiting for the pool's node to become ACTIVE (about 10 minutes)..."
 until [ "$("${OCI[@]}" ce node-pool get --node-pool-id "$POOL_ID" --query 'data.nodes[0]."lifecycle-state"' --raw-output 2>/dev/null)" = "ACTIVE" ]; do sleep 20; done
 NODE_IP=$("${OCI[@]}" ce node-pool get --node-pool-id "$POOL_ID" --query 'data.nodes[0]."private-ip"' --raw-output)
 echo "node $NODE_IP is ACTIVE; waiting for it to be Ready in Kubernetes with both GPUs advertised..."
+DEADLINE=$(( $(date +%s) + ${READY_TIMEOUT_SECONDS:-1200} ))
 until [ "$(kubectl get node "$NODE_IP" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null)" = "True" ] \
-   && [ "$(kubectl get node "$NODE_IP" -o jsonpath='{.status.capacity.nvidia\.com/gpu}' 2>/dev/null)" = "2" ]; do sleep 15; done
+   && [ "$(kubectl get node "$NODE_IP" -o jsonpath='{.status.capacity.nvidia\.com/gpu}' 2>/dev/null)" = "2" ]; do
+  if [ "$(date +%s)" -ge "$DEADLINE" ]; then
+    echo "ERROR: node $NODE_IP did not become Ready with 2 GPUs within ${READY_TIMEOUT_SECONDS:-1200}s" >&2
+    "${OCI[@]}" ce node-pool get --node-pool-id "$POOL_ID" --query 'data.nodes[*].{name:name,state:"lifecycle-state",detail:"lifecycle-details"}' --output table >&2 || true
+    kubectl get nodes -o wide >&2 || true
+    kubectl describe node "$NODE_IP" 2>/dev/null | sed -n '/^Conditions:/,/^Addresses:/p' >&2 || true
+    exit 1
+  fi
+  sleep 15
+done
 kubectl get node "$NODE_IP" \
   -o custom-columns='NODE:.metadata.name,POOL:.metadata.labels.nvidia-oci-samples/pool,READY:.status.conditions[?(@.type=="Ready")].status,GPUS:.status.capacity.nvidia\.com/gpu,EPHEMERAL:.status.capacity.ephemeral-storage'
 echo "Expected EPHEMERAL close to the boot volume size (about 238Gi for 250 GB). If it reads ~30Gi, the cloud-init did not run; see README Pitfalls."

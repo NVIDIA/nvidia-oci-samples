@@ -20,7 +20,8 @@ servingEngineSpec:
       shmSize: 20Gi
       # Uncomment to pass a Hugging Face token if you hit download rate limits:
       # hf_token: "hf_..."
-      # Schedule only onto the node pool created by create-node-pool.sh (label value = NODE_POOL_NAME).
+      # Schedule only onto the node pool created by create-node-pool.sh. deploy.sh overrides the value
+      # below with $NODE_POOL_NAME, so the two scripts always agree; edit it only for manual helm runs.
       nodeSelectorTerms:
         - matchExpressions:
             - key: nvidia-oci-samples/pool

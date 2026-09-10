@@ -56,14 +56,17 @@ tool_calls = ch["message"].get("tool_calls") or []
 check(any(c["function"]["name"] == "get_weather" for c in tool_calls), "no structured get_weather tool call returned")
 
 t0 = time.time()
-chunks, text = 0, ""
+chunks, text, done = 0, "", False
 with post({"max_tokens": 80, "temperature": 0.0, "stream": True, **NO_THINK,
            "messages": [{"role": "user", "content": "Count from 1 to 10, comma separated."}]}, stream=True) as s:
     for line in s.iter_lines():
-        if line and line.startswith(b"data: ") and line != b"data: [DONE]":
+        if line == b"data: [DONE]":
+            done = True
+        elif line and line.startswith(b"data: "):
             chunks += 1
             text += json.loads(line[6:])["choices"][0]["delta"].get("content") or ""
-print(f"stream ({time.time() - t0:.1f}s): {chunks} chunks, text={text.strip()!r}")
+print(f"stream ({time.time() - t0:.1f}s): {chunks} chunks, done={done}, text={text.strip()!r}")
+check(done, "stream ended without the [DONE] sentinel")
 check(chunks > 1 and "1" in text and "10" in text, "streamed response is incomplete")
 
 t0 = time.time()

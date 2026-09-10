@@ -11,7 +11,14 @@ set -euo pipefail
 OCI=(oci --region "$OCI_REGION" ${OCI_CLI_PROFILE:+--profile "$OCI_CLI_PROFILE"} ${OCI_CLI_AUTH:+--auth "$OCI_CLI_AUTH"})
 RELEASE="${RELEASE:-lightning}"; NAMESPACE="${NAMESPACE:-lightning}"; NODE_POOL_NAME="${NODE_POOL_NAME:-nemotron-lightning-a10x2}"
 
-helm uninstall "$RELEASE" -n "$NAMESPACE" 2>/dev/null || true
+MARKER="nvidia-oci-samples-owner"
+if [ "$(kubectl -n "$NAMESPACE" get configmap "$MARKER" -o jsonpath='{.data.release}' 2>/dev/null)" = "$RELEASE" ]; then
+  helm uninstall "$RELEASE" -n "$NAMESPACE" 2>/dev/null || true
+  kubectl -n "$NAMESPACE" delete configmap "$MARKER" --ignore-not-found >/dev/null
+  echo "release $RELEASE uninstalled"
+else
+  echo "no release named $RELEASE created by this sample in $NAMESPACE; nothing uninstalled"
+fi
 if kubectl get namespace "$NAMESPACE" -o jsonpath='{.metadata.labels.nvidia-oci-samples/owner}' 2>/dev/null | grep -q '^nemotron-lightning-vllm-oke$'; then
   kubectl delete namespace "$NAMESPACE" --wait=false
   echo "namespace $NAMESPACE deleted (created by this sample)"
