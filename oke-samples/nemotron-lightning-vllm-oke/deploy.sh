@@ -68,15 +68,27 @@ record_ownership() { # persist Helm's firstDeployed for this release in the loca
   [ "$ok" = 1 ]
 }
 
-NEW_INSTALL=0
+NEW_INSTALL=0; CONFIRMED_MARKER_ONLY=0
 if helm status "$RELEASE" -n "$NAMESPACE" >/dev/null 2>&1; then
-  # Never overwrite a release this sample did not create, or one that replaced ours.
-  LIVE=$(release_first_deployed); OWNED=0
+  # Never overwrite a release this sample did not create, or one that replaced ours. The local receipt is
+  # proof. The in-cluster marker is only a hint (anyone with ConfigMap access in the namespace could write
+  # it), so with the marker alone the upgrade needs an explicit interactive confirmation.
+  LIVE=$(release_first_deployed); RECEIPT_OK=0; MARKER_OK=0
   if [ -n "$LIVE" ]; then
-    [ "$(cat "$(receipt_path)" 2>/dev/null || true)" = "$LIVE" ] && OWNED=1
-    [ "$(marker_field release)" = "$RELEASE" ] && [ "$(marker_field first_deployed)" = "$LIVE" ] && OWNED=1
+    [ "$(cat "$(receipt_path)" 2>/dev/null || true)" = "$LIVE" ] && RECEIPT_OK=1
+    [ "$(marker_field release)" = "$RELEASE" ] && [ "$(marker_field first_deployed)" = "$LIVE" ] && MARKER_OK=1
   fi
-  if [ "$OWNED" != 1 ]; then
+  if [ "$RECEIPT_OK" = 1 ]; then
+    echo "release $RELEASE exists and matches this machine's ownership receipt; upgrading it"
+  elif [ "$MARKER_OK" = 1 ]; then
+    echo "release $RELEASE exists and matches the in-cluster marker (first deployed $LIVE), but this machine has no ownership receipt from the deploy.sh run that installed it."
+    if read -r -p "Upgrade it anyway? [y/N] " ANSWER && { [ "$ANSWER" = "y" ] || [ "$ANSWER" = "Y" ]; }; then
+      CONFIRMED_MARKER_ONLY=1
+    else
+      echo "ERROR: not confirmed; nothing changed. Run deploy.sh interactively to confirm, or from the machine that installed the release." >&2
+      exit 1
+    fi
+  else
     echo "ERROR: a Helm release named $RELEASE already exists in $NAMESPACE and does not match this sample's ownership records." >&2
     echo "       Choose another RELEASE/NAMESPACE, or remove it yourself first." >&2
     exit 1
@@ -105,12 +117,17 @@ if ! helm upgrade --install "$RELEASE" vllm/vllm-stack --version "$CHART_VERSION
   echo "ERROR: helm upgrade --install failed" >&2
   exit 1
 fi
-if [ "$NEW_INSTALL" = 1 ] && ! record_ownership; then
-  # Neither record could be written: undo our own install rather than leave a release nothing can prove we own.
-  echo "ERROR: ownership of the new release could not be recorded; uninstalling it again" >&2
-  helm uninstall "$RELEASE" -n "$NAMESPACE" >/dev/null 2>&1 || true
-  kubectl -n "$NAMESPACE" delete configmap "$MARKER" --ignore-not-found >/dev/null 2>&1 || true
-  exit 1
+if [ "$NEW_INSTALL" = 1 ]; then
+  if ! record_ownership; then
+    # Neither record could be written: undo our own install rather than leave a release nothing can prove we own.
+    echo "ERROR: ownership of the new release could not be recorded; uninstalling it again" >&2
+    helm uninstall "$RELEASE" -n "$NAMESPACE" >/dev/null 2>&1 || true
+    kubectl -n "$NAMESPACE" delete configmap "$MARKER" --ignore-not-found >/dev/null 2>&1 || true
+    exit 1
+  fi
+elif [ "$CONFIRMED_MARKER_ONLY" = 1 ]; then
+  # Ownership was confirmed by hand; write the receipt so this machine needs no prompt next time.
+  record_ownership || echo "WARN: could not write the ownership receipt; the next run will prompt again" >&2
 fi
 
 DEPLOY="${RELEASE}-nemotron-35-lightning-deployment-vllm"

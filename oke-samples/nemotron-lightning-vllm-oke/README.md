@@ -146,12 +146,12 @@ Expected `validate.py` output is in [`results/validate-2026-09-10.txt`](./result
 
 | File | Purpose |
 | --- | --- |
-| `create-cluster.sh` | Optional. Creates a VCN (Internet, NAT, and Service gateways; API, worker, and load-balancer subnets) and a Basic OKE cluster with a public endpoint, both tagged `nvidia-oci-samples-owner=nemotron-lightning-vllm-oke`; writes a kubeconfig and prints the exports for the next steps. |
+| `create-cluster.sh` | Optional. Creates a VCN (Internet, NAT, and Service gateways; API, worker, and load-balancer subnets) and a Basic OKE cluster with a public endpoint, everything tagged `nvidia-oci-samples-owner=nemotron-lightning-vllm-oke`; writes a kubeconfig and prints the exports for the next steps. If it fails part-way, it prints every OCID created so far with the exact command that removes it. |
 | `preflight.sh` | Checks tools, reports `VM.GPU.A10.2` availability per availability domain, reads the cluster's Kubernetes version. |
 | `cloud-init.sh` | Node bootstrap: `/usr/libexec/oci-growfs -y`, then the standard OKE init script. Passed as `--node-metadata user_data`. |
 | `create-node-pool.sh` | Finds the matching GPU node image for the cluster version, creates the node pool labeled `nvidia-oci-samples/pool=<name>`, waits for that pool's node with a 20-minute deadline. |
 | `values.yaml` | vLLM Production Stack values: model, image, TP=2, Ampere-friendly backends, tool and reasoning parsers, scheduling pinned to the sample's node pool, router disabled. |
-| `deploy.sh` | Creates and labels the namespace, makes CoreDNS schedulable on GPU-only clusters, refuses to overwrite a release it did not create, `helm upgrade --install` pinned to the pool from `NODE_POOL_NAME`, records the release identity (a local receipt plus an in-cluster marker), waits until the engine is Available, prints the vLLM startup summary. |
+| `deploy.sh` | Creates and labels the namespace, makes CoreDNS schedulable on GPU-only clusters, refuses to overwrite a release it did not create (and asks before upgrading one that only the in-cluster marker vouches for), `helm upgrade --install` pinned to the pool from `NODE_POOL_NAME`, records the release identity (a local receipt plus an in-cluster marker), waits until the engine is Available, prints the vLLM startup summary. |
 | `validate.py` | Five checks against the OpenAI-compatible endpoint; exits nonzero if any expectation fails. |
 | `relay_probe.py` | Optional. Sends two requests through NeMo Relay's managed execution and writes an ATIF trajectory. |
 | `cleanup.sh` | After confirmation, removes the Helm release (only if it matches the ownership records `deploy.sh` wrote), the namespace (only if `deploy.sh` created it and no release remains in it), and the node pool. `ASSUME_YES=1` skips the prompts; unattended uninstall of the release requires the local receipt. |
@@ -222,7 +222,7 @@ Nothing in the serving stack changed to get this: the probe calls the same endpo
 
 This uninstalls the Helm release only if an ownership record matches the live release (its Helm `firstDeployed` timestamp) and you confirm, deletes the namespace only if `deploy.sh` created it and no Helm release in any state remains in it, and asks again before deleting the node pool. The OKE cluster, VCN, and anything else you already had are left untouched.
 
-`deploy.sh` writes two ownership records: a receipt under `~/.local/state/nvidia-oci-samples/nemotron-lightning-vllm-oke/` on the machine that ran the install (`STATE_DIR` overrides the location), and a marker ConfigMap in the namespace. Only the receipt authorizes an unattended uninstall (`ASSUME_YES=1`), because anyone who can write ConfigMaps in the namespace could forge the marker. From another machine, run `cleanup.sh` without `ASSUME_YES` and confirm at the prompt.
+`deploy.sh` writes two ownership records: a receipt under `~/.local/state/nvidia-oci-samples/nemotron-lightning-vllm-oke/` on the machine that ran the install (`STATE_DIR` overrides the location), and a marker ConfigMap in the namespace. Only the receipt authorizes an unattended uninstall (`ASSUME_YES=1`) or an unattended re-run of `deploy.sh` against the existing release, because anyone who can write ConfigMaps in the namespace could forge the marker. From another machine, both scripts ask you to confirm at a prompt; a confirmed `deploy.sh` run then writes the receipt for that machine.
 
 If `create-cluster.sh` created the cluster, remove it and its VCN afterwards:
 

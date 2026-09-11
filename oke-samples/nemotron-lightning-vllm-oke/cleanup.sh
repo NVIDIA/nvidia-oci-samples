@@ -15,6 +15,7 @@ set -euo pipefail
 OCI=(oci --region "$OCI_REGION" ${OCI_CLI_PROFILE:+--profile "$OCI_CLI_PROFILE"} ${OCI_CLI_AUTH:+--auth "$OCI_CLI_AUTH"})
 RELEASE="${RELEASE:-lightning}"; NAMESPACE="${NAMESPACE:-lightning}"; NODE_POOL_NAME="${NODE_POOL_NAME:-nemotron-lightning-a10x2}"
 STATE_DIR="${STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/nvidia-oci-samples/nemotron-lightning-vllm-oke}"
+FAILED=0
 
 MARKER="nvidia-oci-samples-owner"
 marker_field() { kubectl -n "$NAMESPACE" get configmap "$MARKER" -o jsonpath="{.data.$1}" 2>/dev/null || true; }
@@ -58,8 +59,11 @@ else
   rm -f "$(receipt_path)"
 fi
 if kubectl get namespace "$NAMESPACE" -o jsonpath='{.metadata.labels.nvidia-oci-samples/owner}' 2>/dev/null | grep -q '^nemotron-lightning-vllm-oke$'; then
-  # helm list shows only deployed and failed releases by default; include the in-progress states too.
-  if [ -n "$(helm list -n "$NAMESPACE" -q --deployed --failed --pending --uninstalling 2>/dev/null)" ]; then
+  # helm list shows only deployed and failed releases by default; include the in-progress states too, and
+  # fail closed: if the lookup itself fails, keep the namespace.
+  if ! RELEASES=$(helm list -n "$NAMESPACE" -q --deployed --failed --pending --uninstalling); then
+    echo "ERROR: could not list Helm releases in namespace $NAMESPACE; namespace retained" >&2; FAILED=1
+  elif [ -n "$RELEASES" ]; then
     echo "namespace $NAMESPACE was created by this sample but still holds Helm releases; left in place"
   else
     kubectl delete namespace "$NAMESPACE" --wait=false
@@ -81,3 +85,4 @@ if [ -n "$POOL_ID" ] && [ "$POOL_ID" != "null" ]; then
 else
   echo "no node pool named $NODE_POOL_NAME found"
 fi
+exit "$FAILED"
