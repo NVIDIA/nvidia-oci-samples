@@ -5,6 +5,7 @@
 # Deploy Nemotron 3.5 Lightning (NVFP4) with the vLLM Production Stack chart into namespace `lightning`,
 # then wait for the engine to finish loading. Requires KUBECONFIG pointing at the cluster.
 set -euo pipefail
+# Requires kubectl, helm 3.13 or newer (helm get metadata), and jq.
 HERE="$(cd "$(dirname "$0")" && pwd)"
 RELEASE="${RELEASE:-lightning}"; NAMESPACE="${NAMESPACE:-lightning}"; CHART_VERSION="${CHART_VERSION:-0.1.12}"
 
@@ -15,9 +16,13 @@ NODE_POOL_NAME="${NODE_POOL_NAME:-nemotron-lightning-a10x2}"   # must match crea
 
 if ! kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
   # Create the namespace with the ownership label in one request so cleanup.sh can recognize it.
-  kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml \
-    | kubectl label --local -f - "$OWNER_LABEL" -o yaml \
-    | kubectl apply -f -
+  # `kubectl create` (not apply) so a namespace that appears concurrently is never adopted.
+  if ! kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml \
+      | kubectl label --local -f - "$OWNER_LABEL" -o yaml \
+      | kubectl create -f -; then
+    echo "ERROR: namespace $NAMESPACE appeared while this script was creating it; not adopting it. Re-run to install into it." >&2
+    exit 1
+  fi
 elif kubectl get namespace "$NAMESPACE" -o jsonpath='{.metadata.labels.nvidia-oci-samples/owner}' | grep -q "^$OWNER$"; then
   echo "namespace $NAMESPACE exists and was created by this sample"
 else
@@ -36,22 +41,40 @@ if ! kubectl -n kube-system get pods -l k8s-app=kube-dns -o jsonpath='{.items[*]
   kubectl -n kube-system rollout status deploy/coredns --timeout=5m
 fi
 
-# Never overwrite a release this sample did not create.
+# Ownership marker. It records the release name and, once installed, Helm's own firstDeployed
+# timestamp for that release instance, so a stale marker cannot claim an unrelated release that
+# later reuses the same (namespace, release) pair. helm get metadata needs Helm 3.13 or newer.
+marker_field() { kubectl -n "$NAMESPACE" get configmap "$MARKER" -o jsonpath="{.data.$1}" 2>/dev/null || true; }
+release_first_deployed() { helm get metadata "$RELEASE" -n "$NAMESPACE" -o json 2>/dev/null | jq -r '.firstDeployed // empty'; }
+
+NEW_INSTALL=0
 if helm status "$RELEASE" -n "$NAMESPACE" >/dev/null 2>&1; then
-  if [ "$(kubectl -n "$NAMESPACE" get configmap "$MARKER" -o jsonpath='{.data.release}' 2>/dev/null)" != "$RELEASE" ]; then
-    echo "ERROR: a Helm release named $RELEASE already exists in $NAMESPACE and was not created by this sample." >&2
+  # Never overwrite a release this sample did not create, or one that replaced ours.
+  if [ "$(marker_field release)" != "$RELEASE" ] || [ -z "$(marker_field first_deployed)" ] \
+     || [ "$(marker_field first_deployed)" != "$(release_first_deployed)" ]; then
+    echo "ERROR: a Helm release named $RELEASE already exists in $NAMESPACE and does not match this sample's ownership record." >&2
     echo "       Choose another RELEASE/NAMESPACE, or remove it yourself first." >&2
     exit 1
   fi
+else
+  # Persist ownership before Helm mutates anything; remove it again if the install fails.
+  NEW_INSTALL=1
+  kubectl -n "$NAMESPACE" create configmap "$MARKER" --from-literal=release="$RELEASE" --from-literal=owner="$OWNER" \
+    --from-literal=first_deployed="" --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 fi
 
 helm repo add vllm https://vllm-project.github.io/production-stack >/dev/null 2>&1 || true
 helm repo update vllm >/dev/null
-helm upgrade --install "$RELEASE" vllm/vllm-stack --version "$CHART_VERSION" \
-  --namespace "$NAMESPACE" -f "$HERE/values.yaml" \
-  --set-string "servingEngineSpec.modelSpec[0].nodeSelectorTerms[0].matchExpressions[0].values[0]=$NODE_POOL_NAME"
-kubectl -n "$NAMESPACE" create configmap "$MARKER" --from-literal=release="$RELEASE" --from-literal=owner="$OWNER" \
-  --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+if ! helm upgrade --install "$RELEASE" vllm/vllm-stack --version "$CHART_VERSION" \
+    --namespace "$NAMESPACE" -f "$HERE/values.yaml" \
+    --set-string "servingEngineSpec.modelSpec[0].nodeSelectorTerms[0].matchExpressions[0].values[0]=$NODE_POOL_NAME"; then
+  [ "$NEW_INSTALL" = 1 ] && kubectl -n "$NAMESPACE" delete configmap "$MARKER" --ignore-not-found >/dev/null
+  echo "ERROR: helm upgrade --install failed" >&2
+  exit 1
+fi
+if [ "$NEW_INSTALL" = 1 ]; then
+  kubectl -n "$NAMESPACE" patch configmap "$MARKER" --type merge -p "{\"data\":{\"first_deployed\":\"$(release_first_deployed)\"}}" >/dev/null
+fi
 
 DEPLOY="${RELEASE}-nemotron-35-lightning-deployment-vllm"
 # A re-run after fixing cluster DNS may find the engine crash-looping on the old failure; restart it.

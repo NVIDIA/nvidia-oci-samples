@@ -65,7 +65,7 @@ No NGC subscription or support contract is required.
 - An OCI tenancy with quota for `VM.GPU.A10.2` in at least one availability domain of your region. The service limit is `gpu-a10-count`; two GPUs are consumed.
 - An existing OKE cluster (Basic or Enhanced, Kubernetes 1.33 or newer) whose API endpoint you can reach with `kubectl`. The cluster's worker subnet must allow outbound internet access (NAT or Internet Gateway) to pull the vLLM image and the model weights.
 - Somewhere for CoreDNS to run. OKE GPU nodes carry a `nvidia.com/gpu` NoSchedule taint, so on a GPU-only cluster CoreDNS stays Pending and pods cannot resolve names. `deploy.sh` detects that and adds the GPU toleration to CoreDNS and its autoscaler, the same fix as the Nemotron cookbook; if you would rather not touch `kube-system`, add a small CPU node pool first.
-- `oci` CLI configured for your tenancy, plus `kubectl`, `helm` 3, `python3` 3.10 or newer, and `jq`.
+- `oci` CLI configured for your tenancy, plus `kubectl`, `helm` 3.13 or newer, `python3` 3.10 or newer, and `jq`.
 - About 40 minutes end to end: 10 for the node to join, 3 to pull the 10 GB image, 5 to download 21.6 GB of weights, a few for kernel warm-up.
 - A Hugging Face token only if you hit download rate limits (`HF_TOKEN`, passed through the chart's `hf_token` value).
 
@@ -136,7 +136,7 @@ Expected `validate.py` output is in [`results/validate-2026-09-10.txt`](./result
 | `deploy.sh` | Creates and labels the namespace, makes CoreDNS schedulable on GPU-only clusters, refuses to overwrite a release it did not create, `helm upgrade --install` pinned to the pool from `NODE_POOL_NAME`, waits until the engine is Available, prints the vLLM startup summary. |
 | `validate.py` | Five checks against the OpenAI-compatible endpoint; exits nonzero if any expectation fails. |
 | `relay_probe.py` | Optional. Sends two requests through NeMo Relay's managed execution and writes an ATIF trajectory. |
-| `cleanup.sh` | Removes the Helm release (only the one `deploy.sh` created), the namespace (only if `deploy.sh` created it), and, after confirmation, the node pool. |
+| `cleanup.sh` | After confirmation, removes the Helm release (only if it matches the ownership record `deploy.sh` wrote), the namespace (only if `deploy.sh` created it), and the node pool. `ASSUME_YES=1` skips the prompts. |
 | `results/` | Outputs captured on 2026-09-10 by running these scripts end to end: `validate.py` output, selected vLLM startup log lines, and the Relay trajectory. |
 
 ## Serving Configuration
@@ -182,4 +182,4 @@ vLLM 0.27 returns the model's thinking in the `reasoning` field of the message. 
 ./cleanup.sh
 ```
 
-This removes the `lightning` Helm release, deletes the namespace only if `deploy.sh` created it, and asks before deleting the node pool. The OKE cluster, VCN, and anything else you already had are left untouched.
+This uninstalls the Helm release only if the sample's ownership record matches the live release (its Helm `firstDeployed` timestamp) and you confirm, deletes the namespace only if `deploy.sh` created it, and asks again before deleting the node pool. Set `ASSUME_YES=1` for unattended runs. The OKE cluster, VCN, and anything else you already had are left untouched.
