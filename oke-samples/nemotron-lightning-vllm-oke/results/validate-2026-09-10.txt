@@ -1,0 +1,9 @@
+# validate.py output, Nemotron 3.5 Lightning NVFP4 on OKE, 1 x VM.GPU.A10.2, vllm/vllm-openai:v0.27.1
+# Captured 2026-09-10 (us-phoenix-1) over a kubectl port-forward to the engine Service, by running the sample scripts in this directory as committed.
+models: ['nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4']
+chat (0.6s): content='LIGHTNING-OK' finish=stop usage={'prompt_tokens': 27, 'completion_tokens': 6, 'total_tokens': 33}
+tools (0.5s): finish=tool_calls tool_calls=[{"id": "chatcmpl-tool-a71ac48a1761df02", "type": "function", "function": {"name": "get_weather", "arguments": "{\"city\": \"Phoenix\"}"}}]
+stream (0.5s): 31 chunks, done=True, text='1, 2, 3, 4, 5, 6, 7, 8, 9, 10'
+reasoning-on (3.4s): finish=stop reasoning=1797 chars content='No, because 91 = 7 × 13, so it has factors other than 1 and itself and is not pr' usage={'prompt_tokens': 32, 'completion_tokens': 586, 'total_tokens': 618}
+
+VALIDATION PASSED

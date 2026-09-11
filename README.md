@@ -49,6 +49,7 @@ Samples are organized by OCI service:
 
 - [`oke-samples/`](./oke-samples) — Samples that run on [Oracle Container Engine for Kubernetes (OKE)](https://www.oracle.com/cloud/cloud-native/container-engine-kubernetes/).
   - `aiq-2.0/` — NVIDIA AIQ 2.0 on OKE *(coming soon)*
+  - [`nemotron-lightning-vllm-oke/`](./oke-samples/nemotron-lightning-vllm-oke/) — Nemotron 3.5 Lightning served with vLLM on a `VM.GPU.A10.2` node pool as a private OpenAI-compatible endpoint, with optional NeMo Relay tracing.
 - [`generative-ai-samples/`](./generative-ai-samples) — Samples for NVIDIA generative AI workflows on OCI.
   - [`agentic-multimodal-expense-intelligence/`](./generative-ai-samples/agentic-multimodal-expense-intelligence/) — Nemotron Parse + Omni receipt intelligence with NemoClaw-style governance controls.
 - [`nemotron-switchyard/`](./nemotron-switchyard/) — Co-locate Nemotron and Qwen on DGX Spark and route requests with NVIDIA NeMo Switchyard.
