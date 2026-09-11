@@ -26,7 +26,7 @@ client = OpenAI(
 
 ## What the Sample Shows
 
-1. Creates a GPU node pool on an existing OKE cluster with the one cloud-init line that most OKE GPU deployments get wrong (see [Pitfalls](#pitfalls)).
+1. Optionally creates a small OKE cluster from an empty compartment, then creates a GPU node pool with the one cloud-init line that most OKE GPU deployments get wrong (see [Pitfalls](#pitfalls)).
 2. Deploys Nemotron 3.5 Lightning with vLLM tensor-parallel across two A10 GPUs using one Helm command.
 3. Confirms the endpoint serves the model, answers a chat request, returns **structured tool calls**, streams tokens, and exposes the **reasoning trace as a field**.
 4. Optionally records every call as an [ATIF](https://github.com/NVIDIA/NeMo-Relay) trajectory with NVIDIA NeMo Relay, with no change to the serving stack.
@@ -63,7 +63,7 @@ No NGC subscription or support contract is required.
 ## Requirements
 
 - An OCI tenancy with quota for `VM.GPU.A10.2` in at least one availability domain of your region. The service limit is `gpu-a10-count`; two GPUs are consumed.
-- An existing OKE cluster (Basic or Enhanced, Kubernetes 1.33 or newer) whose API endpoint you can reach with `kubectl`. The cluster's worker subnet must allow outbound internet access (NAT or Internet Gateway) to pull the vLLM image and the model weights.
+- An OKE cluster (Basic or Enhanced, Kubernetes 1.33 or newer) whose API endpoint you can reach with `kubectl`. The cluster's worker subnet must allow outbound internet access (NAT or Internet Gateway) to pull the vLLM image and the model weights. If you do not have one, [`create-cluster.sh`](./create-cluster.sh) builds a VCN and a Basic cluster that meet these requirements; a Basic cluster with no nodes has no charge.
 - Somewhere for CoreDNS to run. OKE GPU nodes carry a `nvidia.com/gpu` NoSchedule taint, so on a GPU-only cluster CoreDNS stays Pending and pods cannot resolve names. `deploy.sh` detects that and adds the GPU toleration to CoreDNS and its autoscaler, the same fix as the Nemotron cookbook; if you would rather not touch `kube-system`, add a small CPU node pool first.
 - `oci` CLI configured for your tenancy, plus `kubectl`, `helm` 3.13 or newer, `python3` 3.10 or newer, and `jq`.
 - About 40 minutes end to end: 10 for the node to join, 3 to pull the 10 GB image, 5 to download 21.6 GB of weights, a few for kernel warm-up.
@@ -86,7 +86,24 @@ Your laptop                          OCI region
                                              cloud-init: oci-growfs + OKE bootstrap
 ```
 
+The cluster can be one you already have or one created by `create-cluster.sh` (VCN with Internet, NAT, and Service gateways; public API endpoint; Flannel).
+
 ## Quickstart
+
+### Starting from an empty compartment (optional)
+
+If you have no OKE cluster yet, create one first. This takes about 10 minutes and creates nothing that bills while idle:
+
+```bash
+export OCI_REGION="us-phoenix-1"                       # a region with A10 capacity
+export OCI_COMPARTMENT_ID="ocid1.compartment.oc1..."   # where the VCN and cluster go
+export OCI_CLI_PROFILE="DEFAULT"                       # optional; your ~/.oci/config profile
+./create-cluster.sh                                    # VCN + Basic OKE cluster + ./kubeconfig; prints the exports below
+```
+
+It picks the newest Kubernetes version that also has an OKE GPU node image, so the next step can find one; set `KUBERNETES_VERSION` to choose. Copy the three `export` lines it prints (`OKE_CLUSTER_ID`, `WORKER_SUBNET_ID`, `KUBECONFIG`) and continue with the steps below. The Kubernetes API is reachable from `API_ALLOWED_CIDR` (default `0.0.0.0/0`, the same as the Console quick-create; requests still need a signed OCI token). Set it to your own egress range if you know it. When you are done, `./delete-cluster.sh` removes the cluster and the VCN; see [Cleanup](#cleanup).
+
+### Deploying on a cluster
 
 Every script reads its inputs from environment variables. Set them once:
 
@@ -129,6 +146,7 @@ Expected `validate.py` output is in [`results/validate-2026-09-10.txt`](./result
 
 | File | Purpose |
 | --- | --- |
+| `create-cluster.sh` | Optional. Creates a VCN (Internet, NAT, and Service gateways; API, worker, and load-balancer subnets) and a Basic OKE cluster with a public endpoint, both tagged `nvidia-oci-samples-owner=nemotron-lightning-vllm-oke`; writes a kubeconfig and prints the exports for the next steps. |
 | `preflight.sh` | Checks tools, reports `VM.GPU.A10.2` availability per availability domain, reads the cluster's Kubernetes version. |
 | `cloud-init.sh` | Node bootstrap: `/usr/libexec/oci-growfs -y`, then the standard OKE init script. Passed as `--node-metadata user_data`. |
 | `create-node-pool.sh` | Finds the matching GPU node image for the cluster version, creates the node pool labeled `nvidia-oci-samples/pool=<name>`, waits for that pool's node with a 20-minute deadline. |
@@ -137,6 +155,7 @@ Expected `validate.py` output is in [`results/validate-2026-09-10.txt`](./result
 | `validate.py` | Five checks against the OpenAI-compatible endpoint; exits nonzero if any expectation fails. |
 | `relay_probe.py` | Optional. Sends two requests through NeMo Relay's managed execution and writes an ATIF trajectory. |
 | `cleanup.sh` | After confirmation, removes the Helm release (only if it matches the ownership record `deploy.sh` wrote), the namespace (only if `deploy.sh` created it), and the node pool. `ASSUME_YES=1` skips the prompts. |
+| `delete-cluster.sh` | Optional. Deletes a cluster created by `create-cluster.sh` and then its VCN. Refuses clusters and VCNs without the ownership tag, refuses while node pools remain, and keeps the VCN if another cluster still uses it. |
 | `results/` | Outputs captured on 2026-09-10 by running these scripts end to end: `validate.py` output, selected vLLM startup log lines, and the Relay trajectory. |
 
 ## Serving Configuration
@@ -164,7 +183,26 @@ vLLM 0.27 returns the model's thinking in the `reasoning` field of the message. 
 
 ## Observing The Endpoint With NeMo Relay (Optional)
 
-[NVIDIA NeMo Relay](https://github.com/NVIDIA/NeMo-Relay) is an in-process runtime that records and controls model and tool calls. Because the endpoint speaks the OpenAI chat format, Relay recognizes it automatically; `relay_probe.py` wraps two requests in a Relay scope and exports an [ATIF](https://github.com/NVIDIA/NeMo-Relay) trajectory with the model name, per-step token usage, and the structured tool call. The recorded trajectory from the reference run is [`results/relay-trajectory-2026-09-10.json`](./results/relay-trajectory-2026-09-10.json). Requires `nemo-relay>=0.8.4`.
+[NVIDIA NeMo Relay](https://github.com/NVIDIA/NeMo-Relay) is an in-process runtime that records and controls model and tool calls. Because the endpoint speaks the OpenAI chat format, Relay recognizes it automatically; `relay_probe.py` wraps two requests in a Relay scope and exports an [ATIF](https://github.com/NVIDIA/NeMo-Relay) trajectory with the model name, per-step token usage, and the structured tool call. Requires `nemo-relay>=0.8.4`.
+
+The recorded trajectory from the reference run is four steps: two user prompts and two model turns. The second model turn is the structured tool call, recorded with its token usage. Excerpt from [`results/relay-trajectory-2026-09-10.json`](./results/relay-trajectory-2026-09-10.json):
+
+```json
+{
+  "schema_version": "ATIF-v1.7",
+  "agent": {"name": "lightning-probe", "model_name": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4"},
+  "final_metrics": {"total_steps": 4, "total_prompt_tokens": 293, "total_completion_tokens": 24},
+  "steps": [
+    {"step_id": 3, "source": "user", "message": "Call the get_utc_time tool to find the current UTC time, then report it."},
+    {"step_id": 4, "source": "agent",
+     "model_name": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4",
+     "tool_calls": [{"tool_call_id": "chatcmpl-tool-b1db46801ef76be6", "function_name": "get_utc_time", "arguments": {}}],
+     "metrics": {"prompt_tokens": 264, "completion_tokens": 16}}
+  ]
+}
+```
+
+Nothing in the serving stack changed to get this: the probe calls the same endpoint the OpenAI SDK would, through Relay's `llm.execute`, and Relay's exporter writes the file.
 
 ## Pitfalls
 
@@ -183,3 +221,11 @@ vLLM 0.27 returns the model's thinking in the `reasoning` field of the message. 
 ```
 
 This uninstalls the Helm release only if the sample's ownership record matches the live release (its Helm `firstDeployed` timestamp) and you confirm, deletes the namespace only if `deploy.sh` created it, and asks again before deleting the node pool. Set `ASSUME_YES=1` for unattended runs. The OKE cluster, VCN, and anything else you already had are left untouched.
+
+If `create-cluster.sh` created the cluster, remove it and its VCN afterwards:
+
+```bash
+./delete-cluster.sh
+```
+
+It deletes only a cluster and VCN that carry the tag `nvidia-oci-samples-owner=nemotron-lightning-vllm-oke`, refuses while the cluster still has node pools (run `cleanup.sh` first), and leaves the VCN in place if another cluster uses it. `ASSUME_YES=1` skips the prompt.
