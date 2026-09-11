@@ -6,13 +6,13 @@
 # (Internet, NAT, and Service gateways; API, worker, and load-balancer subnets), a Basic OKE cluster with a
 # public API endpoint and Flannel networking, and a kubeconfig. Nothing GPU-specific happens here; run
 # create-node-pool.sh next. These are the commands that created the cluster used for the results/ run.
-# Every resource carries the freeform tag nvidia-oci-samples-owner=nemotron-lightning-vllm-oke, which is what
-# delete-cluster.sh checks before deleting anything.
+# Every resource, including each subnet, route table, security list, and gateway, carries the freeform tag
+# nvidia-oci-samples-owner=nemotron-lightning-vllm-oke; delete-cluster.sh deletes only resources that carry it.
 #
 # Requires OCI_REGION, OCI_COMPARTMENT_ID. Optional: CLUSTER_NAME (default nemotron-lightning),
 # KUBERNETES_VERSION (default: the newest version OKE offers that also has a GPU node image, so create-node-pool.sh
-# can find one; the results/ run used v1.35.2), VCN_CIDR (default 10.0.0.0/16;
-# the subnets are carved from its first three /24s), API_ALLOWED_CIDR (source range allowed to reach the
+# can find one; the results/ run used v1.35.2), VCN_CIDR (default 10.0.0.0/16; must be a private /16 not overlapping
+# 10.244.0.0/16 or 10.96.0.0/16; the subnets are carved from its first three /24s), API_ALLOWED_CIDR (source range allowed to reach the
 # Kubernetes API on 6443; default 0.0.0.0/0 like the Console quick-create, the API still requires signed OCI
 # tokens; tighten it to your egress range if you know it), KUBECONFIG_OUT (default ./kubeconfig),
 # OCI_CLI_PROFILE, OCI_CLI_AUTH. Prints the exports the other scripts need.
@@ -29,7 +29,14 @@ OWNER_TAGS='{"nvidia-oci-samples-owner": "nemotron-lightning-vllm-oke"}'
 C=$OCI_COMPARTMENT_ID
 log(){ echo "[$(date +%H:%M:%S)] $*"; }
 
-# 10.0.0.0/16 -> 10.0.0.0/28 (API endpoint), 10.0.10.0/24 (workers), 10.0.20.0/24 (load balancers).
+# The VCN must be a private /16 (A.B.0.0/16) so the fixed subnets below fit inside it, and it must not overlap
+# the pod or service ranges. Checked before any OCI resource is created.
+if ! [[ "$VCN_CIDR" =~ ^(10\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])|172\.(1[6-9]|2[0-9]|3[01])|192\.168)\.0\.0/16$ ]]; then
+  echo "ERROR: VCN_CIDR must be a private /16 such as 10.0.0.0/16, 172.16.0.0/16, or 192.168.0.0/16 (got $VCN_CIDR)" >&2; exit 1
+fi
+case "$VCN_CIDR" in "${PODS_CIDR%.*.*}".0.0/16|"${SERVICES_CIDR%.*.*}".0.0/16)
+  echo "ERROR: VCN_CIDR $VCN_CIDR overlaps the pod range $PODS_CIDR or the service range $SERVICES_CIDR" >&2; exit 1;; esac
+# A.B.0.0/16 -> A.B.0.0/28 (API endpoint), A.B.10.0/24 (workers), A.B.20.0/24 (load balancers).
 BASE=${VCN_CIDR%.*.*}
 API_SUBNET_CIDR="$BASE.0.0/28"; WORKER_SUBNET_CIDR="$BASE.10.0/24"; LB_SUBNET_CIDR="$BASE.20.0/24"
 # VCN DNS labels: letters and digits only, at most 15 characters.
@@ -50,23 +57,23 @@ log "Kubernetes $K8S"
 log "VCN $CLUSTER_NAME-vcn ($VCN_CIDR) with Internet, NAT, and Service gateways"
 VCN_ID=$("${OCI[@]}" network vcn create --compartment-id "$C" --display-name "$CLUSTER_NAME-vcn" --cidr-blocks "[\"$VCN_CIDR\"]" \
   --dns-label "$DNS_LABEL" --freeform-tags "$OWNER_TAGS" --wait-for-state AVAILABLE --query data.id --raw-output)
-IGW_ID=$("${OCI[@]}" network internet-gateway create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-igw" \
+IGW_ID=$("${OCI[@]}" network internet-gateway create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-igw" --freeform-tags "$OWNER_TAGS" \
   --is-enabled true --wait-for-state AVAILABLE --query data.id --raw-output)
-NAT_ID=$("${OCI[@]}" network nat-gateway create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-nat" \
+NAT_ID=$("${OCI[@]}" network nat-gateway create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-nat" --freeform-tags "$OWNER_TAGS" \
   --wait-for-state AVAILABLE --query data.id --raw-output)
 SVC_ID=$("${OCI[@]}" network service list --query "data[?contains(name, 'All') && contains(name, 'Services')].id | [0]" --raw-output)
 SVC_CIDR=$("${OCI[@]}" network service list --query "data[?contains(name, 'All') && contains(name, 'Services')].\"cidr-block\" | [0]" --raw-output)
-SGW_ID=$("${OCI[@]}" network service-gateway create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-sgw" \
+SGW_ID=$("${OCI[@]}" network service-gateway create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-sgw" --freeform-tags "$OWNER_TAGS" \
   --services "[{\"serviceId\": \"$SVC_ID\"}]" --wait-for-state AVAILABLE --query data.id --raw-output)
 
 log "route tables and security list"
-PRIV_RT=$("${OCI[@]}" network route-table create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-private-rt" \
+PRIV_RT=$("${OCI[@]}" network route-table create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-private-rt" --freeform-tags "$OWNER_TAGS" \
   --route-rules "[{\"cidrBlock\": \"0.0.0.0/0\", \"networkEntityId\": \"$NAT_ID\"},{\"destination\": \"$SVC_CIDR\", \"destinationType\": \"SERVICE_CIDR_BLOCK\", \"networkEntityId\": \"$SGW_ID\"}]" \
   --wait-for-state AVAILABLE --query data.id --raw-output)
-PUB_RT=$("${OCI[@]}" network route-table create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-public-rt" \
+PUB_RT=$("${OCI[@]}" network route-table create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-public-rt" --freeform-tags "$OWNER_TAGS" \
   --route-rules "[{\"cidrBlock\": \"0.0.0.0/0\", \"networkEntityId\": \"$IGW_ID\"}]" --wait-for-state AVAILABLE --query data.id --raw-output)
 # Ingress: Kubernetes API from API_ALLOWED_CIDR; everything from the VCN, pod, and service ranges; path-MTU ICMP.
-SL_ID=$("${OCI[@]}" network security-list create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-sl" \
+SL_ID=$("${OCI[@]}" network security-list create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-sl" --freeform-tags "$OWNER_TAGS" \
   --egress-security-rules '[{"destination": "0.0.0.0/0", "protocol": "all", "isStateless": false}]' \
   --ingress-security-rules "[
     {\"source\": \"$API_ALLOWED_CIDR\", \"protocol\": \"6\", \"isStateless\": false, \"tcpOptions\": {\"destinationPortRange\": {\"min\": 6443, \"max\": 6443}}},
@@ -77,11 +84,11 @@ SL_ID=$("${OCI[@]}" network security-list create --compartment-id "$C" --vcn-id 
   --wait-for-state AVAILABLE --query data.id --raw-output)
 
 log "subnets: API $API_SUBNET_CIDR (public), workers $WORKER_SUBNET_CIDR (private), load balancers $LB_SUBNET_CIDR (public)"
-API_SUBNET=$("${OCI[@]}" network subnet create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-api" --cidr-block "$API_SUBNET_CIDR" \
+API_SUBNET=$("${OCI[@]}" network subnet create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-api" --freeform-tags "$OWNER_TAGS" --cidr-block "$API_SUBNET_CIDR" \
   --route-table-id "$PUB_RT" --security-list-ids "[\"$SL_ID\"]" --dns-label kubeapi --wait-for-state AVAILABLE --query data.id --raw-output)
-WORKER_SUBNET=$("${OCI[@]}" network subnet create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-workers" --cidr-block "$WORKER_SUBNET_CIDR" \
+WORKER_SUBNET=$("${OCI[@]}" network subnet create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-workers" --freeform-tags "$OWNER_TAGS" --cidr-block "$WORKER_SUBNET_CIDR" \
   --route-table-id "$PRIV_RT" --security-list-ids "[\"$SL_ID\"]" --dns-label workers --prohibit-public-ip-on-vnic true --wait-for-state AVAILABLE --query data.id --raw-output)
-LB_SUBNET=$("${OCI[@]}" network subnet create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-lb" --cidr-block "$LB_SUBNET_CIDR" \
+LB_SUBNET=$("${OCI[@]}" network subnet create --compartment-id "$C" --vcn-id "$VCN_ID" --display-name "$CLUSTER_NAME-lb" --freeform-tags "$OWNER_TAGS" --cidr-block "$LB_SUBNET_CIDR" \
   --route-table-id "$PUB_RT" --security-list-ids "[\"$SL_ID\"]" --dns-label lb --wait-for-state AVAILABLE --query data.id --raw-output)
 
 log "OKE cluster $CLUSTER_NAME (Basic, $K8S, public endpoint, Flannel); about 10 minutes"

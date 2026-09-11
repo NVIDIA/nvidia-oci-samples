@@ -5,9 +5,11 @@
 # Deploy Nemotron 3.5 Lightning (NVFP4) with the vLLM Production Stack chart into namespace `lightning`,
 # then wait for the engine to finish loading. Requires KUBECONFIG pointing at the cluster.
 set -euo pipefail
-# Requires kubectl, helm 3.13 or newer (helm get metadata), and jq.
+# Requires kubectl, helm 3.13 or newer (helm get metadata), and jq. Optional: STATE_DIR for the local ownership
+# receipt (default ~/.local/state/nvidia-oci-samples/nemotron-lightning-vllm-oke).
 HERE="$(cd "$(dirname "$0")" && pwd)"
 RELEASE="${RELEASE:-lightning}"; NAMESPACE="${NAMESPACE:-lightning}"; CHART_VERSION="${CHART_VERSION:-0.1.12}"
+STATE_DIR="${STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/nvidia-oci-samples/nemotron-lightning-vllm-oke}"
 
 OWNER="nemotron-lightning-vllm-oke"
 OWNER_LABEL="nvidia-oci-samples/owner=$OWNER"
@@ -41,18 +43,41 @@ if ! kubectl -n kube-system get pods -l k8s-app=kube-dns -o jsonpath='{.items[*]
   kubectl -n kube-system rollout status deploy/coredns --timeout=5m
 fi
 
-# Ownership marker. It records the release name and, once installed, Helm's own firstDeployed
-# timestamp for that release instance, so a stale marker cannot claim an unrelated release that
-# later reuses the same (namespace, release) pair. helm get metadata needs Helm 3.13 or newer.
+# Ownership. Two records identify the release instance this sample installed by Helm's own firstDeployed
+# timestamp, so a stale record cannot claim an unrelated release that later reuses the same (namespace,
+# release) pair:
+#   - a local receipt under STATE_DIR on the machine that ran the install (nothing in the cluster can forge it;
+#     cleanup.sh requires it for an unattended uninstall), and
+#   - the in-cluster marker ConfigMap, a hint that anyone with ConfigMap write access in the namespace could
+#     forge, so it only ever authorizes an interactive uninstall.
+# helm get metadata needs Helm 3.13 or newer.
 marker_field() { kubectl -n "$NAMESPACE" get configmap "$MARKER" -o jsonpath="{.data.$1}" 2>/dev/null || true; }
 release_first_deployed() { helm get metadata "$RELEASE" -n "$NAMESPACE" -o json 2>/dev/null | jq -r '.firstDeployed // empty'; }
+digest() { if command -v sha256sum >/dev/null 2>&1; then sha256sum; else shasum -a 256; fi; }
+receipt_path() { # one receipt per (cluster API server, namespace, release)
+  local server; server=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}' 2>/dev/null || true)
+  printf '%s/%s.first_deployed' "$STATE_DIR" "$(printf '%s|%s|%s' "$server" "$NAMESPACE" "$RELEASE" | digest | cut -c1-32)"
+}
+record_ownership() { # persist Helm's firstDeployed for this release in the local receipt and the in-cluster marker
+  local fd ok=0; fd=$(release_first_deployed)
+  if [ -z "$fd" ]; then echo "ERROR: helm get metadata returned no firstDeployed for $RELEASE (needs Helm 3.13 or newer)" >&2; return 1; fi
+  if mkdir -p "$STATE_DIR" 2>/dev/null && (umask 077; printf '%s\n' "$fd" > "$(receipt_path)") 2>/dev/null; then ok=1
+  else echo "WARN: could not write the local ownership receipt under $STATE_DIR" >&2; fi
+  if kubectl -n "$NAMESPACE" patch configmap "$MARKER" --type merge -p "{\"data\":{\"first_deployed\":\"$fd\"}}" >/dev/null 2>&1; then ok=1
+  else echo "WARN: could not update the in-cluster ownership marker $MARKER" >&2; fi
+  [ "$ok" = 1 ]
+}
 
 NEW_INSTALL=0
 if helm status "$RELEASE" -n "$NAMESPACE" >/dev/null 2>&1; then
   # Never overwrite a release this sample did not create, or one that replaced ours.
-  if [ "$(marker_field release)" != "$RELEASE" ] || [ -z "$(marker_field first_deployed)" ] \
-     || [ "$(marker_field first_deployed)" != "$(release_first_deployed)" ]; then
-    echo "ERROR: a Helm release named $RELEASE already exists in $NAMESPACE and does not match this sample's ownership record." >&2
+  LIVE=$(release_first_deployed); OWNED=0
+  if [ -n "$LIVE" ]; then
+    [ "$(cat "$(receipt_path)" 2>/dev/null || true)" = "$LIVE" ] && OWNED=1
+    [ "$(marker_field release)" = "$RELEASE" ] && [ "$(marker_field first_deployed)" = "$LIVE" ] && OWNED=1
+  fi
+  if [ "$OWNED" != 1 ]; then
+    echo "ERROR: a Helm release named $RELEASE already exists in $NAMESPACE and does not match this sample's ownership records." >&2
     echo "       Choose another RELEASE/NAMESPACE, or remove it yourself first." >&2
     exit 1
   fi
@@ -68,12 +93,24 @@ helm repo update vllm >/dev/null
 if ! helm upgrade --install "$RELEASE" vllm/vllm-stack --version "$CHART_VERSION" \
     --namespace "$NAMESPACE" -f "$HERE/values.yaml" \
     --set-string "servingEngineSpec.modelSpec[0].nodeSelectorTerms[0].matchExpressions[0].values[0]=$NODE_POOL_NAME"; then
-  [ "$NEW_INSTALL" = 1 ] && kubectl -n "$NAMESPACE" delete configmap "$MARKER" --ignore-not-found >/dev/null
+  if [ "$NEW_INSTALL" = 1 ]; then
+    if helm status "$RELEASE" -n "$NAMESPACE" >/dev/null 2>&1; then
+      # Helm kept a release record (failed install). Record its identity so a re-run or cleanup.sh can prove ownership.
+      echo "Helm kept a failed release record for $RELEASE; recording its identity for re-runs and cleanup.sh" >&2
+      record_ownership || echo "ERROR: could not record ownership of the failed release; remove it with 'helm uninstall $RELEASE -n $NAMESPACE' before re-running" >&2
+    else
+      kubectl -n "$NAMESPACE" delete configmap "$MARKER" --ignore-not-found >/dev/null
+    fi
+  fi
   echo "ERROR: helm upgrade --install failed" >&2
   exit 1
 fi
-if [ "$NEW_INSTALL" = 1 ]; then
-  kubectl -n "$NAMESPACE" patch configmap "$MARKER" --type merge -p "{\"data\":{\"first_deployed\":\"$(release_first_deployed)\"}}" >/dev/null
+if [ "$NEW_INSTALL" = 1 ] && ! record_ownership; then
+  # Neither record could be written: undo our own install rather than leave a release nothing can prove we own.
+  echo "ERROR: ownership of the new release could not be recorded; uninstalling it again" >&2
+  helm uninstall "$RELEASE" -n "$NAMESPACE" >/dev/null 2>&1 || true
+  kubectl -n "$NAMESPACE" delete configmap "$MARKER" --ignore-not-found >/dev/null 2>&1 || true
+  exit 1
 fi
 
 DEPLOY="${RELEASE}-nemotron-35-lightning-deployment-vllm"
