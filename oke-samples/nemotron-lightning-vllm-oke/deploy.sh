@@ -127,7 +127,10 @@ if [ "$NEW_INSTALL" = 1 ]; then
   fi
 elif [ "$CONFIRMED_MARKER_ONLY" = 1 ]; then
   # Ownership was confirmed by hand; write the receipt so this machine needs no prompt next time.
-  record_ownership || echo "WARN: could not write the ownership receipt; the next run will prompt again" >&2
+  # record_ownership also succeeds when only the marker could be updated, so check the receipt itself.
+  if ! record_ownership || [ "$(cat "$(receipt_path)" 2>/dev/null || true)" != "$LIVE" ]; then
+    echo "WARN: the local ownership receipt was not written; the next deploy.sh run on this machine will prompt again" >&2
+  fi
 fi
 
 DEPLOY="${RELEASE}-nemotron-35-lightning-deployment-vllm"
