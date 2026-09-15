@@ -53,6 +53,7 @@ Samples are organized first by use case, then by OCI service or deployment platf
 
 ### Inference
 
+- OKE / vLLM: [Nemotron Lightning endpoint](inference/oke/vllm/nemotron-lightning-endpoint)
 - Compute / Multi-runtime: [FLUX.1 inference benchmarking](inference/compute/flux-1-benchmarking)
 - Compute / Model Optimizer: [FLUX.1 NVFP4 quantization](inference/compute/model-optimizer/flux-1-quantization)
 - DGX Spark / NeMo Switchyard: [Route requests between Nemotron and Qwen](inference/dgx-spark/nemo-switchyard)
