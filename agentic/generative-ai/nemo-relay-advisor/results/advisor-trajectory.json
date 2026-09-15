@@ -1,0 +1,973 @@
+{
+  "agent": {
+    "model_name": "meta.llama-3.3-70b-instruct",
+    "name": "nemotron-deployment-advisor",
+    "version": "2.0.0"
+  },
+  "final_metrics": {
+    "total_completion_tokens": 166,
+    "total_prompt_tokens": 3230,
+    "total_steps": 5
+  },
+  "schema_version": "ATIF-v1.7",
+  "session_id": "nemotron-advisor-langchain",
+  "steps": [
+    {
+      "extra": {
+        "ancestry": {
+          "function_id": "01a0a62e-b217-7900-86c3-aeb5c70a58f4",
+          "function_name": "meta.llama-3.3-70b-instruct",
+          "parent_id": "01a0a62e-b215-7660-8316-25f9600e4125",
+          "parent_name": "nemotron-advisor"
+        },
+        "llm_request": {
+          "messages": [
+            {
+              "data": {
+                "additional_kwargs": {},
+                "content": "You are an Oracle Cloud deployment advisor. Gather real data with the tools before answering: search the model catalog for 'nemotron' AND for 'llama', and check GPU capacity. The two deployment paths are: (a) use a model from the managed Generative AI catalog as-is, or (b) self-host an open-weights model such as NVIDIA Nemotron on OKE using the tenancy's own GPU capacity. In the final recommendation (under 150 words), pick a path for running Nemotron specifically, citing the exact catalog results and per-AD GPU counts you found.",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "type": "system"
+              },
+              "type": "system"
+            },
+            {
+              "data": {
+                "additional_kwargs": {},
+                "content": "We want to run NVIDIA Nemotron on this OCI tenancy (requested by jane.doe@example.com). First check which Nemotron or Llama models the managed OCI Generative AI service offers here, then check whether we have A10 GPU capacity to self-host on OKE. Finish with a concrete deployment recommendation.",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "type": "human"
+              },
+              "type": "human"
+            }
+          ],
+          "model": "meta.llama-3.3-70b-instruct"
+        }
+      },
+      "message": "We want to run NVIDIA Nemotron on this OCI tenancy (requested by jane.doe@example.com). First check which Nemotron or Llama models the managed OCI Generative AI service offers here, then check whether we have A10 GPU capacity to self-host on OKE. Finish with a concrete deployment recommendation.",
+      "source": "user",
+      "step_id": 1,
+      "timestamp": "2026-09-15T17:47:53.239757+00:00"
+    },
+    {
+      "extra": {
+        "ancestry": {
+          "function_id": "01a0a62e-b217-7900-86c3-aeb5c70a58f4",
+          "function_name": "meta.llama-3.3-70b-instruct",
+          "parent_id": "01a0a62e-b215-7660-8316-25f9600e4125",
+          "parent_name": "nemotron-advisor"
+        },
+        "invocation": {
+          "end_timestamp": 1789494508.172,
+          "framework": "nemo_relay",
+          "invocation_id": "01a0a62e-b217-7900-86c3-aeb5c70a58f4",
+          "start_timestamp": 1789494473.239,
+          "status": "completed"
+        },
+        "llm_response": {
+          "__nemo_relay_integrations_langchain_model_response": {
+            "messages": [
+              {
+                "data": {
+                  "additional_kwargs": {
+                    "finish_reason": "tool_calls",
+                    "time_created": "2026-09-15 17:48:28.228000+00:00",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": {
+                            "keyword": "nemotron"
+                          },
+                          "name": "list_genai_models"
+                        },
+                        "id": "chatcmpl-tool-8472d1615f991c82",
+                        "type": "function"
+                      }
+                    ],
+                    "total_tokens": 500
+                  },
+                  "content": "",
+                  "id": "lc_run--01a0a62e-b219-7cc2-a1bb-2a254596bcf2-0",
+                  "invalid_tool_calls": [],
+                  "name": null,
+                  "response_metadata": {
+                    "content-length": "346",
+                    "finish_reason": "tool_calls",
+                    "model_id": "meta.llama-3.3-70b-instruct",
+                    "model_version": "1.0.0",
+                    "request_id": "8FC24C1DE8024548998443E1DF4AB315/3B644FD176EDC2814DB2DB80766665EA/ED9C0A486868EEA51F3F6F8259C80D8D",
+                    "time_created": "2026-09-15 17:48:28.228000+00:00",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": {
+                            "keyword": "nemotron"
+                          },
+                          "name": "list_genai_models"
+                        },
+                        "id": "chatcmpl-tool-8472d1615f991c82",
+                        "type": "function"
+                      }
+                    ],
+                    "total_tokens": 500
+                  },
+                  "tool_calls": [
+                    {
+                      "args": {
+                        "keyword": "nemotron"
+                      },
+                      "id": "chatcmpl-tool-8472d1615f991c82",
+                      "name": "list_genai_models",
+                      "type": "tool_call"
+                    }
+                  ],
+                  "type": "ai",
+                  "usage_metadata": {
+                    "input_tokens": 474,
+                    "output_tokens": 26,
+                    "total_tokens": 500
+                  }
+                },
+                "type": "ai"
+              }
+            ]
+          }
+        },
+        "tool_ancestry": [
+          {
+            "function_id": "01a0a62f-3a8e-7c82-b259-c323a67255c2",
+            "function_name": "list_genai_models",
+            "parent_id": "01a0a62e-b215-7660-8316-25f9600e4125",
+            "parent_name": "nemotron-advisor"
+          }
+        ],
+        "tool_invocations": [
+          {
+            "end_timestamp": 1789494508.894,
+            "framework": "nemo_relay",
+            "invocation_id": "chatcmpl-tool-8472d1615f991c82",
+            "start_timestamp": 1789494508.174,
+            "status": "completed"
+          }
+        ]
+      },
+      "llm_call_count": 1,
+      "message": "",
+      "metrics": {
+        "completion_tokens": 26,
+        "prompt_tokens": 474
+      },
+      "model_name": "meta.llama-3.3-70b-instruct",
+      "observation": {
+        "results": [
+          {
+            "extra": {
+              "event_name": "list_genai_models",
+              "event_uuid": "01a0a62f-3a8e-7c82-b259-c323a67255c2",
+              "metadata": {
+                "otel.status_code": "OK"
+              },
+              "parent_event_uuid": "01a0a62e-b215-7660-8316-25f9600e4125",
+              "tool_result": {
+                "__nv_pydantic__": "langchain_core.messages.tool.ToolMessage",
+                "__nv_runtime_type__": "langchain_core.messages.tool.ToolMessage:42017589264",
+                "data": {
+                  "additional_kwargs": {},
+                  "artifact": null,
+                  "content": "{\"region\": \"us-chicago-1\", \"keyword\": \"nemotron\", \"matches\": []}",
+                  "id": null,
+                  "name": "list_genai_models",
+                  "response_metadata": {},
+                  "status": "success",
+                  "tool_call_id": "chatcmpl-tool-8472d1615f991c82",
+                  "type": "tool"
+                }
+              }
+            },
+            "source_call_id": "chatcmpl-tool-8472d1615f991c82"
+          }
+        ]
+      },
+      "source": "agent",
+      "step_id": 2,
+      "timestamp": "2026-09-15T17:48:28.172532+00:00",
+      "tool_calls": [
+        {
+          "arguments": {
+            "keyword": "nemotron"
+          },
+          "extra": {
+            "event_name": "list_genai_models",
+            "event_uuid": "01a0a62f-3a8e-7c82-b259-c323a67255c2",
+            "parent_event_uuid": "01a0a62e-b215-7660-8316-25f9600e4125"
+          },
+          "function_name": "list_genai_models",
+          "tool_call_id": "chatcmpl-tool-8472d1615f991c82"
+        }
+      ]
+    },
+    {
+      "extra": {
+        "ancestry": {
+          "function_id": "01a0a62f-3d5f-7c30-93ee-d1008e17066f",
+          "function_name": "meta.llama-3.3-70b-instruct",
+          "parent_id": "01a0a62e-b215-7660-8316-25f9600e4125",
+          "parent_name": "nemotron-advisor"
+        },
+        "invocation": {
+          "end_timestamp": 1789494526.3,
+          "framework": "nemo_relay",
+          "invocation_id": "01a0a62f-3d5f-7c30-93ee-d1008e17066f",
+          "start_timestamp": 1789494508.896,
+          "status": "completed"
+        },
+        "llm_request": {
+          "messages": [
+            {
+              "data": {
+                "additional_kwargs": {},
+                "content": "You are an Oracle Cloud deployment advisor. Gather real data with the tools before answering: search the model catalog for 'nemotron' AND for 'llama', and check GPU capacity. The two deployment paths are: (a) use a model from the managed Generative AI catalog as-is, or (b) self-host an open-weights model such as NVIDIA Nemotron on OKE using the tenancy's own GPU capacity. In the final recommendation (under 150 words), pick a path for running Nemotron specifically, citing the exact catalog results and per-AD GPU counts you found.",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "type": "system"
+              },
+              "type": "system"
+            },
+            {
+              "data": {
+                "additional_kwargs": {},
+                "content": "We want to run NVIDIA Nemotron on this OCI tenancy (requested by jane.doe@example.com). First check which Nemotron or Llama models the managed OCI Generative AI service offers here, then check whether we have A10 GPU capacity to self-host on OKE. Finish with a concrete deployment recommendation.",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "type": "human"
+              },
+              "type": "human"
+            },
+            {
+              "data": {
+                "additional_kwargs": {
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": {
+                          "keyword": "nemotron"
+                        },
+                        "name": "list_genai_models"
+                      },
+                      "id": "chatcmpl-tool-8472d1615f991c82",
+                      "type": "function"
+                    }
+                  ]
+                },
+                "content": "",
+                "id": null,
+                "invalid_tool_calls": [],
+                "name": null,
+                "response_metadata": {},
+                "tool_calls": [
+                  {
+                    "args": {
+                      "keyword": "nemotron"
+                    },
+                    "id": "chatcmpl-tool-8472d1615f991c82",
+                    "name": "list_genai_models",
+                    "type": "tool_call"
+                  }
+                ],
+                "type": "ai",
+                "usage_metadata": null
+              },
+              "type": "ai"
+            },
+            {
+              "data": {
+                "additional_kwargs": {},
+                "artifact": null,
+                "content": "{\"region\": \"us-chicago-1\", \"keyword\": \"nemotron\", \"matches\": []}",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "status": "success",
+                "tool_call_id": "chatcmpl-tool-8472d1615f991c82",
+                "type": "tool"
+              },
+              "type": "tool"
+            }
+          ],
+          "model": "meta.llama-3.3-70b-instruct"
+        },
+        "llm_response": {
+          "__nemo_relay_integrations_langchain_model_response": {
+            "messages": [
+              {
+                "data": {
+                  "additional_kwargs": {
+                    "finish_reason": "tool_calls",
+                    "time_created": "2026-09-15 17:48:46.360000+00:00",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": {
+                            "keyword": "llama"
+                          },
+                          "name": "list_genai_models"
+                        },
+                        "id": "chatcmpl-tool-8c55614a7a615400",
+                        "type": "function"
+                      }
+                    ],
+                    "total_tokens": 551
+                  },
+                  "content": "",
+                  "id": "lc_run--01a0a62f-3d60-7c03-9bef-d0155f974882-0",
+                  "invalid_tool_calls": [],
+                  "name": null,
+                  "response_metadata": {
+                    "content-length": "343",
+                    "finish_reason": "tool_calls",
+                    "model_id": "meta.llama-3.3-70b-instruct",
+                    "model_version": "1.0.0",
+                    "request_id": "2240665AF53842179F9FBA33AD9809A7/8CB7CAE4C1AD8AFF9982D878FC7281C6/8682337C8FE842D78E46D2B4B317B6D6",
+                    "time_created": "2026-09-15 17:48:46.360000+00:00",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": {
+                            "keyword": "llama"
+                          },
+                          "name": "list_genai_models"
+                        },
+                        "id": "chatcmpl-tool-8c55614a7a615400",
+                        "type": "function"
+                      }
+                    ],
+                    "total_tokens": 551
+                  },
+                  "tool_calls": [
+                    {
+                      "args": {
+                        "keyword": "llama"
+                      },
+                      "id": "chatcmpl-tool-8c55614a7a615400",
+                      "name": "list_genai_models",
+                      "type": "tool_call"
+                    }
+                  ],
+                  "type": "ai",
+                  "usage_metadata": {
+                    "input_tokens": 530,
+                    "output_tokens": 21,
+                    "total_tokens": 551
+                  }
+                },
+                "type": "ai"
+              }
+            ]
+          }
+        },
+        "tool_ancestry": [
+          {
+            "function_id": "01a0a62f-815d-7700-9ad1-49c6cee4708d",
+            "function_name": "list_genai_models",
+            "parent_id": "01a0a62e-b215-7660-8316-25f9600e4125",
+            "parent_name": "nemotron-advisor"
+          }
+        ],
+        "tool_invocations": [
+          {
+            "end_timestamp": 1789494527.391,
+            "framework": "nemo_relay",
+            "invocation_id": "chatcmpl-tool-8c55614a7a615400",
+            "start_timestamp": 1789494526.301,
+            "status": "completed"
+          }
+        ]
+      },
+      "llm_call_count": 1,
+      "message": "",
+      "metrics": {
+        "completion_tokens": 21,
+        "prompt_tokens": 530
+      },
+      "model_name": "meta.llama-3.3-70b-instruct",
+      "observation": {
+        "results": [
+          {
+            "extra": {
+              "event_name": "list_genai_models",
+              "event_uuid": "01a0a62f-815d-7700-9ad1-49c6cee4708d",
+              "metadata": {
+                "otel.status_code": "OK"
+              },
+              "parent_event_uuid": "01a0a62e-b215-7660-8316-25f9600e4125",
+              "tool_result": {
+                "__nv_pydantic__": "langchain_core.messages.tool.ToolMessage",
+                "__nv_runtime_type__": "langchain_core.messages.tool.ToolMessage:42017589264",
+                "data": {
+                  "additional_kwargs": {},
+                  "artifact": null,
+                  "content": "{\"region\": \"us-chicago-1\", \"keyword\": \"llama\", \"matches\": [\"meta.llama-3-70b-instruct\", \"meta.llama-3.1-405b-instruct\", \"meta.llama-3.1-70b-instruct\", \"meta.llama-3.2-11b-vision-instruct\", \"meta.llama-3.2-90b-vision-instruct\", \"meta.llama-3.3-70b-instruct\", \"meta.llama-4-maverick-17b-128e-instruct-fp8\", \"meta.llama-4-scout-17b-16e-instruct\", \"meta.llama-guard-4-12b\"]}",
+                  "id": null,
+                  "name": "list_genai_models",
+                  "response_metadata": {},
+                  "status": "success",
+                  "tool_call_id": "chatcmpl-tool-8c55614a7a615400",
+                  "type": "tool"
+                }
+              }
+            },
+            "source_call_id": "chatcmpl-tool-8c55614a7a615400"
+          }
+        ]
+      },
+      "source": "agent",
+      "step_id": 3,
+      "timestamp": "2026-09-15T17:48:46.300623+00:00",
+      "tool_calls": [
+        {
+          "arguments": {
+            "keyword": "llama"
+          },
+          "extra": {
+            "event_name": "list_genai_models",
+            "event_uuid": "01a0a62f-815d-7700-9ad1-49c6cee4708d",
+            "parent_event_uuid": "01a0a62e-b215-7660-8316-25f9600e4125"
+          },
+          "function_name": "list_genai_models",
+          "tool_call_id": "chatcmpl-tool-8c55614a7a615400"
+        }
+      ]
+    },
+    {
+      "extra": {
+        "ancestry": {
+          "function_id": "01a0a62f-85a1-70d0-9c11-bae283c446c4",
+          "function_name": "meta.llama-3.3-70b-instruct",
+          "parent_id": "01a0a62e-b215-7660-8316-25f9600e4125",
+          "parent_name": "nemotron-advisor"
+        },
+        "invocation": {
+          "end_timestamp": 1789494527.883,
+          "framework": "nemo_relay",
+          "invocation_id": "01a0a62f-85a1-70d0-9c11-bae283c446c4",
+          "start_timestamp": 1789494527.393,
+          "status": "completed"
+        },
+        "llm_request": {
+          "messages": [
+            {
+              "data": {
+                "additional_kwargs": {},
+                "content": "You are an Oracle Cloud deployment advisor. Gather real data with the tools before answering: search the model catalog for 'nemotron' AND for 'llama', and check GPU capacity. The two deployment paths are: (a) use a model from the managed Generative AI catalog as-is, or (b) self-host an open-weights model such as NVIDIA Nemotron on OKE using the tenancy's own GPU capacity. In the final recommendation (under 150 words), pick a path for running Nemotron specifically, citing the exact catalog results and per-AD GPU counts you found.",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "type": "system"
+              },
+              "type": "system"
+            },
+            {
+              "data": {
+                "additional_kwargs": {},
+                "content": "We want to run NVIDIA Nemotron on this OCI tenancy (requested by jane.doe@example.com). First check which Nemotron or Llama models the managed OCI Generative AI service offers here, then check whether we have A10 GPU capacity to self-host on OKE. Finish with a concrete deployment recommendation.",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "type": "human"
+              },
+              "type": "human"
+            },
+            {
+              "data": {
+                "additional_kwargs": {
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": {
+                          "keyword": "nemotron"
+                        },
+                        "name": "list_genai_models"
+                      },
+                      "id": "chatcmpl-tool-8472d1615f991c82",
+                      "type": "function"
+                    }
+                  ]
+                },
+                "content": "",
+                "id": null,
+                "invalid_tool_calls": [],
+                "name": null,
+                "response_metadata": {},
+                "tool_calls": [
+                  {
+                    "args": {
+                      "keyword": "nemotron"
+                    },
+                    "id": "chatcmpl-tool-8472d1615f991c82",
+                    "name": "list_genai_models",
+                    "type": "tool_call"
+                  }
+                ],
+                "type": "ai",
+                "usage_metadata": null
+              },
+              "type": "ai"
+            },
+            {
+              "data": {
+                "additional_kwargs": {},
+                "artifact": null,
+                "content": "{\"region\": \"us-chicago-1\", \"keyword\": \"nemotron\", \"matches\": []}",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "status": "success",
+                "tool_call_id": "chatcmpl-tool-8472d1615f991c82",
+                "type": "tool"
+              },
+              "type": "tool"
+            },
+            {
+              "data": {
+                "additional_kwargs": {
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": {
+                          "keyword": "llama"
+                        },
+                        "name": "list_genai_models"
+                      },
+                      "id": "chatcmpl-tool-8c55614a7a615400",
+                      "type": "function"
+                    }
+                  ]
+                },
+                "content": "",
+                "id": null,
+                "invalid_tool_calls": [],
+                "name": null,
+                "response_metadata": {},
+                "tool_calls": [
+                  {
+                    "args": {
+                      "keyword": "llama"
+                    },
+                    "id": "chatcmpl-tool-8c55614a7a615400",
+                    "name": "list_genai_models",
+                    "type": "tool_call"
+                  }
+                ],
+                "type": "ai",
+                "usage_metadata": null
+              },
+              "type": "ai"
+            },
+            {
+              "data": {
+                "additional_kwargs": {},
+                "artifact": null,
+                "content": "{\"region\": \"us-chicago-1\", \"keyword\": \"llama\", \"matches\": [\"meta.llama-3-70b-instruct\", \"meta.llama-3.1-405b-instruct\", \"meta.llama-3.1-70b-instruct\", \"meta.llama-3.2-11b-vision-instruct\", \"meta.llama-3.2-90b-vision-instruct\", \"meta.llama-3.3-70b-instruct\", \"meta.llama-4-maverick-17b-128e-instruct-fp8\", \"meta.llama-4-scout-17b-16e-instruct\", \"meta.llama-guard-4-12b\"]}",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "status": "success",
+                "tool_call_id": "chatcmpl-tool-8c55614a7a615400",
+                "type": "tool"
+              },
+              "type": "tool"
+            }
+          ],
+          "model": "meta.llama-3.3-70b-instruct"
+        },
+        "llm_response": {
+          "__nemo_relay_integrations_langchain_model_response": {
+            "messages": [
+              {
+                "data": {
+                  "additional_kwargs": {
+                    "finish_reason": "tool_calls",
+                    "time_created": "2026-09-15 17:48:47.939000+00:00",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": {
+                            "shape_family": "a10"
+                          },
+                          "name": "gpu_capacity"
+                        },
+                        "id": "chatcmpl-tool-b61a13d877d413de",
+                        "type": "function"
+                      }
+                    ],
+                    "total_tokens": 740
+                  },
+                  "content": "",
+                  "id": "lc_run--01a0a62f-85a2-7e50-8732-750649acd41e-0",
+                  "invalid_tool_calls": [],
+                  "name": null,
+                  "response_metadata": {
+                    "content-length": "342",
+                    "finish_reason": "tool_calls",
+                    "model_id": "meta.llama-3.3-70b-instruct",
+                    "model_version": "1.0.0",
+                    "request_id": "1AE087C350FB410F8BFD5547FC4518F6/003644A2E5F41BDF0A4541B07CFC3AEE/DC850CEEE852DF72BAA916C7336BD3D4",
+                    "time_created": "2026-09-15 17:48:47.939000+00:00",
+                    "tool_calls": [
+                      {
+                        "function": {
+                          "arguments": {
+                            "shape_family": "a10"
+                          },
+                          "name": "gpu_capacity"
+                        },
+                        "id": "chatcmpl-tool-b61a13d877d413de",
+                        "type": "function"
+                      }
+                    ],
+                    "total_tokens": 740
+                  },
+                  "tool_calls": [
+                    {
+                      "args": {
+                        "shape_family": "a10"
+                      },
+                      "id": "chatcmpl-tool-b61a13d877d413de",
+                      "name": "gpu_capacity",
+                      "type": "tool_call"
+                    }
+                  ],
+                  "type": "ai",
+                  "usage_metadata": {
+                    "input_tokens": 721,
+                    "output_tokens": 19,
+                    "total_tokens": 740
+                  }
+                },
+                "type": "ai"
+              }
+            ]
+          }
+        },
+        "tool_ancestry": [
+          {
+            "function_id": "01a0a62f-878d-7a31-963d-5c42646e80d9",
+            "function_name": "gpu_capacity",
+            "parent_id": "01a0a62e-b215-7660-8316-25f9600e4125",
+            "parent_name": "nemotron-advisor"
+          }
+        ],
+        "tool_invocations": [
+          {
+            "end_timestamp": 1789494529.821,
+            "framework": "nemo_relay",
+            "invocation_id": "chatcmpl-tool-b61a13d877d413de",
+            "start_timestamp": 1789494527.885,
+            "status": "completed"
+          }
+        ]
+      },
+      "llm_call_count": 1,
+      "message": "",
+      "metrics": {
+        "completion_tokens": 19,
+        "prompt_tokens": 721
+      },
+      "model_name": "meta.llama-3.3-70b-instruct",
+      "observation": {
+        "results": [
+          {
+            "extra": {
+              "event_name": "gpu_capacity",
+              "event_uuid": "01a0a62f-878d-7a31-963d-5c42646e80d9",
+              "metadata": {
+                "otel.status_code": "OK"
+              },
+              "parent_event_uuid": "01a0a62e-b215-7660-8316-25f9600e4125",
+              "tool_result": {
+                "__nv_pydantic__": "langchain_core.messages.tool.ToolMessage",
+                "__nv_runtime_type__": "langchain_core.messages.tool.ToolMessage:42017589264",
+                "data": {
+                  "additional_kwargs": {},
+                  "artifact": null,
+                  "content": "[\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-1\",\n    \"name\": \"gpu-a10-core-count-reservable\",\n    \"value\": 32\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-2\",\n    \"name\": \"gpu-a10-core-count-reservable\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-3\",\n    \"name\": \"gpu-a10-core-count-reservable\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-1\",\n    \"name\": \"gpu-a10-count\",\n    \"value\": 32\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-2\",\n    \"name\": \"gpu-a10-count\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-3\",\n    \"name\": \"gpu-a10-count\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-1\",\n    \"name\": \"gpu-a10-reserved-count\",\n    \"value\": 1000000000\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-2\",\n    \"name\": \"gpu-a10-reserved-count\",\n    \"value\": 1000000000\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-3\",\n    \"name\": \"gpu-a10-reserved-count\",\n    \"value\": 1000000000\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-1\",\n    \"name\": \"gpu-a100-v2-core-count-reservable\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-2\",\n    \"name\": \"gpu-a100-v2-core-count-reservable\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-3\",\n    \"name\": \"gpu-a100-v2-core-count-reservable\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-1\",\n    \"name\": \"gpu-a100-v2-count\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-2\",\n    \"name\": \"gpu-a100-v2-count\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-3\",\n    \"name\": \"gpu-a100-v2-count\",\n    \"va",
+                  "id": null,
+                  "name": "gpu_capacity",
+                  "response_metadata": {},
+                  "status": "success",
+                  "tool_call_id": "chatcmpl-tool-b61a13d877d413de",
+                  "type": "tool"
+                }
+              }
+            },
+            "source_call_id": "chatcmpl-tool-b61a13d877d413de"
+          }
+        ]
+      },
+      "source": "agent",
+      "step_id": 4,
+      "timestamp": "2026-09-15T17:48:47.883534+00:00",
+      "tool_calls": [
+        {
+          "arguments": {
+            "shape_family": "a10"
+          },
+          "extra": {
+            "event_name": "gpu_capacity",
+            "event_uuid": "01a0a62f-878d-7a31-963d-5c42646e80d9",
+            "parent_event_uuid": "01a0a62e-b215-7660-8316-25f9600e4125"
+          },
+          "function_name": "gpu_capacity",
+          "tool_call_id": "chatcmpl-tool-b61a13d877d413de"
+        }
+      ]
+    },
+    {
+      "extra": {
+        "ancestry": {
+          "function_id": "01a0a62f-8f1f-7763-908b-658b14649fae",
+          "function_name": "meta.llama-3.3-70b-instruct",
+          "parent_id": "01a0a62e-b215-7660-8316-25f9600e4125",
+          "parent_name": "nemotron-advisor"
+        },
+        "invocation": {
+          "end_timestamp": 1789494533.959,
+          "framework": "nemo_relay",
+          "invocation_id": "01a0a62f-8f1f-7763-908b-658b14649fae",
+          "start_timestamp": 1789494529.823,
+          "status": "completed"
+        },
+        "llm_request": {
+          "messages": [
+            {
+              "data": {
+                "additional_kwargs": {},
+                "content": "You are an Oracle Cloud deployment advisor. Gather real data with the tools before answering: search the model catalog for 'nemotron' AND for 'llama', and check GPU capacity. The two deployment paths are: (a) use a model from the managed Generative AI catalog as-is, or (b) self-host an open-weights model such as NVIDIA Nemotron on OKE using the tenancy's own GPU capacity. In the final recommendation (under 150 words), pick a path for running Nemotron specifically, citing the exact catalog results and per-AD GPU counts you found.",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "type": "system"
+              },
+              "type": "system"
+            },
+            {
+              "data": {
+                "additional_kwargs": {},
+                "content": "We want to run NVIDIA Nemotron on this OCI tenancy (requested by jane.doe@example.com). First check which Nemotron or Llama models the managed OCI Generative AI service offers here, then check whether we have A10 GPU capacity to self-host on OKE. Finish with a concrete deployment recommendation.",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "type": "human"
+              },
+              "type": "human"
+            },
+            {
+              "data": {
+                "additional_kwargs": {
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": {
+                          "keyword": "nemotron"
+                        },
+                        "name": "list_genai_models"
+                      },
+                      "id": "chatcmpl-tool-8472d1615f991c82",
+                      "type": "function"
+                    }
+                  ]
+                },
+                "content": "",
+                "id": null,
+                "invalid_tool_calls": [],
+                "name": null,
+                "response_metadata": {},
+                "tool_calls": [
+                  {
+                    "args": {
+                      "keyword": "nemotron"
+                    },
+                    "id": "chatcmpl-tool-8472d1615f991c82",
+                    "name": "list_genai_models",
+                    "type": "tool_call"
+                  }
+                ],
+                "type": "ai",
+                "usage_metadata": null
+              },
+              "type": "ai"
+            },
+            {
+              "data": {
+                "additional_kwargs": {},
+                "artifact": null,
+                "content": "{\"region\": \"us-chicago-1\", \"keyword\": \"nemotron\", \"matches\": []}",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "status": "success",
+                "tool_call_id": "chatcmpl-tool-8472d1615f991c82",
+                "type": "tool"
+              },
+              "type": "tool"
+            },
+            {
+              "data": {
+                "additional_kwargs": {
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": {
+                          "keyword": "llama"
+                        },
+                        "name": "list_genai_models"
+                      },
+                      "id": "chatcmpl-tool-8c55614a7a615400",
+                      "type": "function"
+                    }
+                  ]
+                },
+                "content": "",
+                "id": null,
+                "invalid_tool_calls": [],
+                "name": null,
+                "response_metadata": {},
+                "tool_calls": [
+                  {
+                    "args": {
+                      "keyword": "llama"
+                    },
+                    "id": "chatcmpl-tool-8c55614a7a615400",
+                    "name": "list_genai_models",
+                    "type": "tool_call"
+                  }
+                ],
+                "type": "ai",
+                "usage_metadata": null
+              },
+              "type": "ai"
+            },
+            {
+              "data": {
+                "additional_kwargs": {},
+                "artifact": null,
+                "content": "{\"region\": \"us-chicago-1\", \"keyword\": \"llama\", \"matches\": [\"meta.llama-3-70b-instruct\", \"meta.llama-3.1-405b-instruct\", \"meta.llama-3.1-70b-instruct\", \"meta.llama-3.2-11b-vision-instruct\", \"meta.llama-3.2-90b-vision-instruct\", \"meta.llama-3.3-70b-instruct\", \"meta.llama-4-maverick-17b-128e-instruct-fp8\", \"meta.llama-4-scout-17b-16e-instruct\", \"meta.llama-guard-4-12b\"]}",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "status": "success",
+                "tool_call_id": "chatcmpl-tool-8c55614a7a615400",
+                "type": "tool"
+              },
+              "type": "tool"
+            },
+            {
+              "data": {
+                "additional_kwargs": {
+                  "tool_calls": [
+                    {
+                      "function": {
+                        "arguments": {
+                          "shape_family": "a10"
+                        },
+                        "name": "gpu_capacity"
+                      },
+                      "id": "chatcmpl-tool-b61a13d877d413de",
+                      "type": "function"
+                    }
+                  ]
+                },
+                "content": "",
+                "id": null,
+                "invalid_tool_calls": [],
+                "name": null,
+                "response_metadata": {},
+                "tool_calls": [
+                  {
+                    "args": {
+                      "shape_family": "a10"
+                    },
+                    "id": "chatcmpl-tool-b61a13d877d413de",
+                    "name": "gpu_capacity",
+                    "type": "tool_call"
+                  }
+                ],
+                "type": "ai",
+                "usage_metadata": null
+              },
+              "type": "ai"
+            },
+            {
+              "data": {
+                "additional_kwargs": {},
+                "artifact": null,
+                "content": "[\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-1\",\n    \"name\": \"gpu-a10-core-count-reservable\",\n    \"value\": 32\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-2\",\n    \"name\": \"gpu-a10-core-count-reservable\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-3\",\n    \"name\": \"gpu-a10-core-count-reservable\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-1\",\n    \"name\": \"gpu-a10-count\",\n    \"value\": 32\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-2\",\n    \"name\": \"gpu-a10-count\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-3\",\n    \"name\": \"gpu-a10-count\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-1\",\n    \"name\": \"gpu-a10-reserved-count\",\n    \"value\": 1000000000\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-2\",\n    \"name\": \"gpu-a10-reserved-count\",\n    \"value\": 1000000000\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-3\",\n    \"name\": \"gpu-a10-reserved-count\",\n    \"value\": 1000000000\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-1\",\n    \"name\": \"gpu-a100-v2-core-count-reservable\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-2\",\n    \"name\": \"gpu-a100-v2-core-count-reservable\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-3\",\n    \"name\": \"gpu-a100-v2-core-count-reservable\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-1\",\n    \"name\": \"gpu-a100-v2-count\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-2\",\n    \"name\": \"gpu-a100-v2-count\",\n    \"value\": 0\n  },\n  {\n    \"ad\": \"EXAMPLE:US-CHICAGO-1-AD-3\",\n    \"name\": \"gpu-a100-v2-count\",\n    \"va",
+                "id": null,
+                "name": null,
+                "response_metadata": {},
+                "status": "success",
+                "tool_call_id": "chatcmpl-tool-b61a13d877d413de",
+                "type": "tool"
+              },
+              "type": "tool"
+            }
+          ],
+          "model": "meta.llama-3.3-70b-instruct"
+        },
+        "llm_response": {
+          "__nemo_relay_integrations_langchain_model_response": {
+            "messages": [
+              {
+                "data": {
+                  "additional_kwargs": {
+                    "finish_reason": "stop",
+                    "time_created": "2026-09-15 17:48:54.018000+00:00",
+                    "total_tokens": 1605
+                  },
+                  "content": "Based on the search results, there are no Nemotron models available in the managed OCI Generative AI catalog, but there are several Llama models available. The tenancy has 32 A10 GPU cores available in one of the availability domains.\n\nTherefore, I recommend self-hosting NVIDIA Nemotron on OKE using the tenancy's own GPU capacity. This will allow for more control over the model and its deployment, and the available GPU capacity should be sufficient to support the model's requirements.",
+                  "id": "lc_run--01a0a62f-8f20-7dc0-b7e2-5830696d5289-0",
+                  "invalid_tool_calls": [],
+                  "name": null,
+                  "response_metadata": {
+                    "content-length": "552",
+                    "finish_reason": "stop",
+                    "model_id": "meta.llama-3.3-70b-instruct",
+                    "model_version": "1.0.0",
+                    "request_id": "47AFE7C33CF7447884DFA00144A0B6AD/2EDFD6B1EFDC530E9E641884E1C4D0BA/7181612C6828456EAE9D56A5E642D843",
+                    "time_created": "2026-09-15 17:48:54.018000+00:00",
+                    "total_tokens": 1605
+                  },
+                  "tool_calls": [],
+                  "type": "ai",
+                  "usage_metadata": {
+                    "input_tokens": 1505,
+                    "output_tokens": 100,
+                    "total_tokens": 1605
+                  }
+                },
+                "type": "ai"
+              }
+            ]
+          }
+        }
+      },
+      "llm_call_count": 1,
+      "message": "Based on the search results, there are no Nemotron models available in the managed OCI Generative AI catalog, but there are several Llama models available. The tenancy has 32 A10 GPU cores available in one of the availability domains.\n\nTherefore, I recommend self-hosting NVIDIA Nemotron on OKE using the tenancy's own GPU capacity. This will allow for more control over the model and its deployment, and the available GPU capacity should be sufficient to support the model's requirements.",
+      "metrics": {
+        "completion_tokens": 100,
+        "prompt_tokens": 1505
+      },
+      "model_name": "meta.llama-3.3-70b-instruct",
+      "source": "agent",
+      "step_id": 5,
+      "timestamp": "2026-09-15T17:48:53.959404+00:00"
+    }
+  ],
+  "trajectory_id": "nemotron-advisor-langchain"
+}

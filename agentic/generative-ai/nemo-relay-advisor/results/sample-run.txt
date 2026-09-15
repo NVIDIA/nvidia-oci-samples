@@ -1,0 +1,16 @@
+  [tool] list_genai_models(keyword='nemotron')
+  [tool] list_genai_models(keyword='llama')
+  [tool] gpu_capacity(shape_family='a10')
+
+=== FINAL ANSWER ===
+Based on the search results, there are no Nemotron models available in the managed OCI Generative AI catalog, but there are several Llama models available. The tenancy has 32 A10 GPU cores available in one of the availability domains.
+
+Therefore, I recommend self-hosting NVIDIA Nemotron on OKE using the tenancy's own GPU capacity. This will allow for more control over the model and its deployment, and the available GPU capacity should be sufficient to support the model's requirements.
+
+ATIF trajectory written to results/advisor-trajectory.json
+final_metrics: {
+  "total_completion_tokens": 166,
+  "total_prompt_tokens": 3230,
+  "total_steps": 5
+}
+steps: 5
