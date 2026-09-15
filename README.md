@@ -50,6 +50,7 @@ Samples are organized first by use case, then by OCI service or deployment platf
 ### Agentic
 
 - OKE / AIQ: [Deploy NVIDIA AIQ 2.0](agentic/oke/aiq/aiq-2.0)
+- Generative AI / NeMo Relay: [Agent observability on OCI Generative AI](agentic/generative-ai/nemo-relay-advisor)
 
 ### Inference
 
