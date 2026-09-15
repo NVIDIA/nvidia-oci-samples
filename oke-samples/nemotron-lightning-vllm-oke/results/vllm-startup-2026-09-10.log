@@ -1,0 +1,16 @@
+# Selected vLLM engine log lines from the 2026-09-10 deployment (vllm/vllm-openai:v0.27.1, TP=2, 2 x A10 on VM.GPU.A10.2), captured by running the sample scripts as committed.
+(Worker_TP0) INFO [__init__.py:665] Selected MarlinFP8ScaledMMLinearKernel for ModelOptFp8LinearMethod
+(Worker_TP0) INFO [__init__.py:1030] Using MarlinNvFp4LinearKernel for NVFP4 GEMM
+(Worker_TP0) Loading safetensors checkpoint shards: 100% Completed | 52/52 [00:05<00:00,  9.14it/s]
+(Worker_TP0) Loading safetensors checkpoint shards: 100% Completed | 52/52 [00:05<00:00,  9.90it/s]
+(Worker_TP0) WARNING [marlin_utils_fp8.py:112] Your GPU does not have native support for FP8 computation but FP8 quantization is being used. Weight-only FP8 compression will be used leveraging the Marlin kernel. This may degrade performance for compute-heavy workloads.
+(Worker_TP0) WARNING [marlin_utils.py:238] Marlin requires thread-tile padding for some weight shapes in this model. Activations and/or outputs of the padded layers are padded/sliced on every forward; performance may be degraded.
+(Worker_TP0) WARNING [marlin.py:34] Your GPU does not have native support for FP4 computation but FP4 quantization is being used. Weight-only FP4 compression will be used leveraging the Marlin kernel. This may degrade performance for compute-heavy workloads.
+(Worker_TP0) WARNING [marlin_utils_fp4.py:354] Your GPU does not have native support for FP4 computation but FP4 quantization is being used. Weight-only FP4 compression will be used leveraging the Marlin kernel. This may degrade performance for compute-heavy workloads.
+(Worker_TP0) INFO [marlin_utils.py:625] Marlin kernel can achieve better performance for small size_n with experimental use_atomic_add feature. You can consider set environment variable VLLM_MARLIN_USE_ATOMIC_ADD to 1 if possible.
+(Worker_TP0) INFO [ssu_dispatch.py:310] Using flashinfer Mamba SSU backend.
+(Worker_TP0) INFO [flashinfer.py:824] FlashInfer resolved query dtypes: prefill=torch.bfloat16, decode=torch.bfloat16, decode_backend=flashinfer-native, kv_cache_dtype=torch.float8_e4m3fn, arch=sm86
+(Worker_TP1) INFO [ssu_dispatch.py:310] Using flashinfer Mamba SSU backend.
+(EngineCore) INFO [kv_cache_utils.py:2235] GPU KV cache size: 1,336,934 tokens
+(EngineCore) INFO [kv_cache_utils.py:2236] Maximum concurrency for 65,536 tokens per request: 20.40x
+(APIServer) INFO:     Application startup complete.

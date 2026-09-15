@@ -1,0 +1,3 @@
+requests>=2.32
+# Optional, for relay_probe.py:
+nemo-relay>=0.8.4
