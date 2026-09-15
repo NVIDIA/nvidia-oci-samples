@@ -43,7 +43,7 @@ An agent's real behavior is the sequence of model and tool calls it actually mad
 ## Requirements
 
 - An OCI tenancy with access to [OCI Generative AI](https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm) in a supported region (the default is `us-chicago-1`).
-- The `oci` CLI configured for your tenancy (the tools shell out to it), and Python 3.11 or newer.
+- The `oci` CLI configured for your tenancy (the tools shell out to it), and Python 3.11 or newer. The Compute capacity report is requested against the root (tenancy) compartment; if `OCI_COMPARTMENT_ID` is a child compartment, set `OCI_TENANCY_ID`.
 - Python packages from [`requirements.txt`](./requirements.txt): `langchain`, `langchain-oci`, and `nemo-relay`.
 
 NeMo Relay 0.9.0 or newer lets you pass `ChatOCIGenAI` to the middleware directly. On the 0.8.x line the sample uses a tiny `_OCIChatCompat` shim that drops an unsupported request header ([NVIDIA/NeMo-Relay#1012](https://github.com/NVIDIA/NeMo-Relay/pull/1012)); delete it once you are on 0.9.0+.
@@ -58,6 +58,7 @@ export OCI_COMPARTMENT_ID="ocid1.compartment.oc1..."   # your compartment (or te
 export OCI_REGION="us-chicago-1"                         # a region with OCI Generative AI
 export OCI_PROFILE="DEFAULT"                             # a profile in ~/.oci/config
 export OCI_AUTH_TYPE="API_KEY"                           # or SECURITY_TOKEN / INSTANCE_PRINCIPAL / RESOURCE_PRINCIPAL
+# export OCI_TENANCY_ID="ocid1.tenancy.oc1..."           # only if OCI_COMPARTMENT_ID is a child compartment
 # export ADVISOR_MODEL="meta.llama-3.3-70b-instruct"     # any managed chat model in the catalog
 
 python3 advisor.py
@@ -70,8 +71,8 @@ The agent makes three tool calls (catalog search for `nemotron`, catalog search 
 | Metric | Value |
 | --- | --- |
 | Trajectory steps | 5 (1 user turn, 4 model turns, 3 nested tool calls) |
-| Prompt tokens | 3,079 |
-| Completion tokens | 137 |
+| Prompt tokens | 3,359 |
+| Completion tokens | 166 |
 | Model | `meta.llama-3.3-70b-instruct` (managed OCI Generative AI) |
 
 Numbers come from the run recorded in [`results/`](./results/) on 2026-09-15. `langchain-oci` prints a `GenericProvider could not extract text` warning on turns where the model returns only tool calls; it is harmless.

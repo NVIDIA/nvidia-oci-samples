@@ -30,6 +30,9 @@ REGION = os.environ.get("OCI_REGION", "us-chicago-1")            # a region wher
 COMPARTMENT = os.environ["OCI_COMPARTMENT_ID"]                    # required: your compartment (or tenancy) OCID
 MODEL = os.environ.get("ADVISOR_MODEL", "meta.llama-3.3-70b-instruct")  # any managed chat model in the catalog
 PROFILE = os.environ.get("OCI_PROFILE", "DEFAULT")               # a profile in ~/.oci/config
+# Compute capacity reports must be requested against the root (tenancy) compartment. If
+# OCI_COMPARTMENT_ID is a child compartment, set OCI_TENANCY_ID to your tenancy OCID.
+TENANCY = os.environ.get("OCI_TENANCY_ID", COMPARTMENT)
 # API_KEY, SECURITY_TOKEN, INSTANCE_PRINCIPAL, or RESOURCE_PRINCIPAL.
 AUTH_TYPE = os.environ.get("OCI_AUTH_TYPE", "API_KEY").upper()
 
@@ -84,7 +87,7 @@ def gpu_capacity(shape: str) -> str:
     """
     print(f"  [tool] gpu_capacity(shape={shape!r})")
     ad_raw = _oci_cli(
-        "iam", "availability-domain", "list", "--compartment-id", COMPARTMENT,
+        "iam", "availability-domain", "list", "--compartment-id", TENANCY,
         "--region", REGION, "--query", "data[*].name",
     )
     try:
@@ -96,17 +99,17 @@ def gpu_capacity(shape: str) -> str:
     rows = []
     for ad in ads[:10]:
         raw = _oci_cli(
-            "compute", "compute-capacity-report", "create", "--compartment-id", COMPARTMENT,
+            "compute", "compute-capacity-report", "create", "--compartment-id", TENANCY,
             "--region", REGION, "--availability-domain", ad,
             "--shape-availabilities", json.dumps([{"instanceShape": shape}]),
             "--query", 'data."shape-availabilities"[0].{status:"availability-status",available:"available-count"}',
         )
+        row = {"ad": ad, "shape": shape}
         try:
             info = json.loads(raw)
         except (ValueError, TypeError):
-            info = {}
-        row = {"ad": ad, "shape": shape}
-        row.update(info if isinstance(info, dict) else {})
+            info = {"error": "could not parse capacity report", "raw": raw[:120]}
+        row.update(info if isinstance(info, dict) else {"error": "unexpected capacity report shape", "raw": raw[:120]})
         rows.append(row)
     return json.dumps({"region": REGION, "shape": shape, "by_ad": rows})
 
@@ -125,9 +128,12 @@ SYSTEM = (
     "from the managed Generative AI catalog as-is, or (b) self-host an open-weights model "
     "such as NVIDIA Nemotron on OKE using the tenancy's own GPU capacity. The capacity "
     "check is a point-in-time Compute capacity report (AVAILABLE vs OUT_OF_HOST_CAPACITY), "
-    "not a guarantee of capacity at launch. In the final recommendation (under 150 words), "
-    "pick a path for running Nemotron specifically, citing the exact catalog results and the "
-    "per-AD capacity status you found."
+    "not a guarantee of capacity at launch. In the final recommendation (under 150 words), cite the "
+    "exact catalog results and the per-AD capacity status you found. If the managed catalog has no "
+    "Nemotron model AND no availability domain has host capacity for the shape, neither path can run "
+    "Nemotron right now: say so plainly and give next steps (try another region or shape, or request "
+    "GPU capacity), and only mention a managed non-Nemotron model as an alternative while making clear "
+    "it is not Nemotron. Otherwise pick the path that runs Nemotron."
 )
 
 
