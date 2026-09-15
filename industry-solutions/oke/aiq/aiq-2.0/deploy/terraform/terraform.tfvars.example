@@ -1,0 +1,36 @@
+# =============================================================================
+# AI-Q Blueprint - OCI Terraform Variables
+# =============================================================================
+#
+# Copy this file to terraform.tfvars and fill in your values:
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# IMPORTANT: terraform.tfvars contains secrets. Never commit it to git.
+# =============================================================================
+
+# --- OCI Provider ---
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaa..."
+user_ocid        = "ocid1.user.oc1..aaaa..."
+fingerprint      = "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
+private_key_path = "~/.oci/oci_api_key.pem"
+region           = "us-chicago-1"
+compartment_id   = "ocid1.compartment.oc1..aaaa..."
+
+# --- General ---
+label_prefix = "aiq"
+
+# --- OKE ---
+kubernetes_version = "v1.34.2"
+node_pool_size     = 1    # single node for dev/test; set to 3+ for HA production
+node_shape         = "VM.Standard.E4.Flex"
+node_ocpus         = 2
+node_memory_gb     = 16
+# ssh_public_key   = "ssh-rsa AAAA..."
+
+# --- Secrets (stored in OCI Vault) ---
+db_admin_password = "CHANGE_ME_StrongPassword123"
+nvidia_api_key    = ""
+tavily_api_key    = ""
+
+# --- Load Balancer ---
+frontend_node_port = 30080
