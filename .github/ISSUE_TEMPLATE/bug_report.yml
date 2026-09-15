@@ -12,8 +12,8 @@ body:
     id: sample
     attributes:
       label: Affected sample
-      description: Which sample directory is affected? (e.g., `oke-samples/aiq-2.0`)
-      placeholder: oke-samples/aiq-2.0
+      description: Which sample directory is affected? (e.g., `agentic/oke/aiq/aiq-2.0`)
+      placeholder: agentic/oke/aiq/aiq-2.0
     validations:
       required: true
   - type: textarea

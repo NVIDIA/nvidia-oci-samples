@@ -31,7 +31,7 @@ These samples are provided as community examples and are not covered by NVIDIA E
 - The OCI CLI installed and configured, or access to the OCI Console
 - Additional, sample-specific prerequisites are documented in each sample's own README
 
-> Samples under [`dgx-spark-samples/`](./dgx-spark-samples) run on local DGX Spark hardware and require no OCI account or cloud GPU shapes.
+> Samples under [`inference/dgx-spark/`](./inference/dgx-spark) run on local DGX Spark hardware and require no OCI account or cloud GPU shapes.
 
 ## Quickstart
 
@@ -45,16 +45,23 @@ These samples are provided as community examples and are not covered by NVIDIA E
 
 ## Samples
 
-Samples are organized by OCI service:
+Samples are organized first by use case, then by OCI service or deployment platform, then by NVIDIA library or stack.
 
-- [`oke-samples/`](./oke-samples) — Samples that run on [Oracle Container Engine for Kubernetes (OKE)](https://www.oracle.com/cloud/cloud-native/container-engine-kubernetes/).
-  - `aiq-2.0/` — NVIDIA AIQ 2.0 on OKE *(coming soon)*
-  - [`nemotron-lightning-vllm-oke/`](./oke-samples/nemotron-lightning-vllm-oke/) — Nemotron 3.5 Lightning served with vLLM on a `VM.GPU.A10.2` node pool as a private OpenAI-compatible endpoint, with optional NeMo Relay tracing.
-- [`generative-ai-samples/`](./generative-ai-samples) — Samples for NVIDIA generative AI workflows on OCI.
-  - [`agentic-multimodal-expense-intelligence/`](./generative-ai-samples/agentic-multimodal-expense-intelligence/) — Nemotron Parse + Omni receipt intelligence with NemoClaw-style governance controls.
-- [`nemotron-switchyard/`](./nemotron-switchyard/) — Co-locate Nemotron and Qwen on DGX Spark and route requests with NVIDIA NeMo Switchyard.
-- [`dgx-spark-samples/`](./dgx-spark-samples) — Samples that run locally on NVIDIA DGX Spark (GB10). No OCI account required.
-  - [`nemotron-lightning-vllm-endpoint/`](./dgx-spark-samples/nemotron-lightning-vllm-endpoint/) — Nemotron 3.5 Lightning served as a private OpenAI-compatible endpoint, with a reproducible When2Call agentic benchmark.
+### Agentic
+
+- OKE / AIQ: [Deploy NVIDIA AIQ 2.0](agentic/oke/aiq/aiq-2.0)
+
+### Inference
+
+- Compute / Multi-runtime: [FLUX.1 inference benchmarking](inference/compute/flux-1-benchmarking)
+- Compute / Model Optimizer: [FLUX.1 NVFP4 quantization](inference/compute/model-optimizer/flux-1-quantization)
+- DGX Spark / NeMo Switchyard: [Route requests between Nemotron and Qwen](inference/dgx-spark/nemo-switchyard)
+- DGX Spark / vLLM: [Nemotron Lightning endpoint](inference/dgx-spark/vllm/nemotron-lightning-endpoint)
+
+### Industry Solutions
+
+- Compute / Nemotron: [Agentic multimodal expense intelligence](industry-solutions/compute/nemotron/agentic-multimodal-expense-intelligence)
+- OKE / AIQ: [Deploy NVIDIA AIQ 2.0](industry-solutions/oke/aiq/aiq-2.0)
 
 Additional samples will be added over time.
 
