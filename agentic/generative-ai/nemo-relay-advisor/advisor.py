@@ -41,9 +41,12 @@ if AUTH_TYPE in ("API_KEY", "SECURITY_TOKEN"):
 
 def _oci_cli(*args: str) -> str:
     """Run a read-only `oci` CLI query and return its stdout (or a short error string)."""
-    result = subprocess.run(
-        ["oci", *args, *_CLI_AUTH], capture_output=True, text=True, timeout=90
-    )
+    try:
+        result = subprocess.run(
+            ["oci", *args, *_CLI_AUTH], capture_output=True, text=True, timeout=90, check=False
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return json.dumps({"error": str(exc)[-300:]})
     return result.stdout if result.returncode == 0 else json.dumps(
         {"error": result.stderr.strip()[-300:]}
     )
@@ -59,24 +62,52 @@ def list_genai_models(keyword: str) -> str:
         "--query", 'data.items[*]."display-name"',
     )
     try:
-        names = sorted({n for n in json.loads(raw) if keyword.lower() in n.lower()})
+        payload = json.loads(raw)
     except (ValueError, TypeError):
         return raw[:300]
+    # A successful catalog query returns a JSON array of display-name strings; anything else
+    # (for example the {"error": ...} object from _oci_cli) means the call did not succeed, so
+    # surface it rather than reporting an empty catalog.
+    if not isinstance(payload, list) or not all(isinstance(n, str) for n in payload):
+        return raw[:300]
+    names = sorted({n for n in payload if keyword.lower() in n.lower()})
     return json.dumps({"region": REGION, "keyword": keyword, "matches": names[:40]})
 
 
 @tool
 def gpu_capacity(shape_family: str) -> str:
-    """Read the tenancy's GPU service limits per availability domain for a shape family such as 'a10'."""
+    """Report remaining GPU capacity per availability domain for a shape family such as 'a10'.
+
+    Uses OCI's resource-availability API (remaining `available` and `used`), not the configured
+    service-limit value, so the recommendation reflects capacity you can actually claim.
+    """
     print(f"  [tool] gpu_capacity(shape_family={shape_family!r})")
-    raw = _oci_cli(
-        "limits", "value", "list", "--service-name", "compute",
-        "--compartment-id", COMPARTMENT, "--region", REGION, "--all",
-        "--query",
-        f"data[?contains(name, 'gpu-{shape_family.lower()}')]."
-        '{name:name,ad:"availability-domain",value:value}',
+    limit_name = f"gpu-{shape_family.lower()}-count"  # exact name, so 'a10' does not match 'a100'
+    ad_raw = _oci_cli(
+        "iam", "availability-domain", "list", "--compartment-id", COMPARTMENT,
+        "--region", REGION, "--query", "data[*].name",
     )
-    return raw[:1500]
+    try:
+        ads = json.loads(ad_raw)
+    except (ValueError, TypeError):
+        return ad_raw[:300]
+    if not isinstance(ads, list) or not all(isinstance(a, str) for a in ads):
+        return ad_raw[:300]
+    rows = []
+    for ad in ads[:10]:
+        raw = _oci_cli(
+            "limits", "resource-availability", "get", "--service-name", "compute",
+            "--limit-name", limit_name, "--compartment-id", COMPARTMENT, "--availability-domain", ad,
+            "--region", REGION, "--query", "data.{available:available,used:used}",
+        )
+        try:
+            info = json.loads(raw)
+        except (ValueError, TypeError):
+            info = {}
+        row = {"ad": ad, "limit": limit_name}
+        row.update(info if isinstance(info, dict) else {})
+        rows.append(row)
+    return json.dumps({"region": REGION, "limit": limit_name, "by_ad": rows})
 
 
 QUESTION = (
@@ -93,7 +124,7 @@ SYSTEM = (
     "AI catalog as-is, or (b) self-host an open-weights model such as NVIDIA Nemotron "
     "on OKE using the tenancy's own GPU capacity. In the final recommendation (under "
     "150 words), pick a path for running Nemotron specifically, citing the exact catalog "
-    "results and per-AD GPU counts you found."
+    "results and the per-AD available GPU capacity you found."
 )
 
 

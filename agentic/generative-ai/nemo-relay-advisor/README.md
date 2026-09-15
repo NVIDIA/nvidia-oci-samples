@@ -24,14 +24,14 @@ It is intentionally small and external-safe:
 
 - No API keys, credentials, customer data, or internal content. Everything is parameterized through environment variables you set from your own tenancy.
 - All components are publicly available open-source releases.
-- The two tools issue read-only `oci` CLI queries against your own tenancy (the managed model catalog and your GPU service limits). Nothing is created or changed.
+- The two tools issue read-only `oci` CLI queries against your own tenancy (the managed model catalog and your GPU capacity). Nothing is created or changed.
 
 ## What the Sample Shows
 
 The agent answers a real deployment question: *can we run NVIDIA Nemotron on this OCI tenancy, and how?* To answer it, the agent:
 
 1. Searches the managed OCI Generative AI catalog for `nemotron` and for `llama` models.
-2. Reads the tenancy's A10 GPU service limits per availability domain.
+2. Checks the tenancy's remaining A10 GPU capacity per availability domain (via OCI's resource-availability API, so it reflects capacity you can actually claim, not just the configured limit).
 3. Recommends a path: use a managed catalog model as-is, or self-host an open-weights model such as NVIDIA Nemotron on OKE (see the [Nemotron Lightning on OKE sample](../../../inference/oke/vllm/nemotron-lightning-endpoint/)).
 
 Every model and tool call is captured by NeMo Relay and exported to [`results/advisor-trajectory.json`](./results/advisor-trajectory.json).
@@ -65,13 +65,13 @@ python3 advisor.py
 
 ## Expected Output
 
-The agent makes three tool calls (catalog search for `nemotron`, catalog search for `llama`, GPU limits for `a10`), then gives a recommendation. NeMo Relay exports a five-step trajectory. A captured transcript is in [`results/sample-run.txt`](./results/sample-run.txt) and the trajectory in [`results/advisor-trajectory.json`](./results/advisor-trajectory.json):
+The agent makes three tool calls (catalog search for `nemotron`, catalog search for `llama`, A10 GPU availability), then gives a recommendation. NeMo Relay exports a five-step trajectory. A captured transcript is in [`results/sample-run.txt`](./results/sample-run.txt) and the trajectory in [`results/advisor-trajectory.json`](./results/advisor-trajectory.json):
 
 | Metric | Value |
 | --- | --- |
 | Trajectory steps | 5 (1 user turn, 4 model turns, 3 nested tool calls) |
-| Prompt tokens | 3,230 |
-| Completion tokens | 166 |
+| Prompt tokens | 2,777 |
+| Completion tokens | 162 |
 | Model | `meta.llama-3.3-70b-instruct` (managed OCI Generative AI) |
 
 Numbers come from the run recorded in [`results/`](./results/) on 2026-09-15. `langchain-oci` prints a `GenericProvider could not extract text` warning on turns where the model returns only tool calls; it is harmless.
