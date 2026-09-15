@@ -8,8 +8,8 @@ middleware, ``NemoRelayMiddleware()``, and exports the whole run as a portable A
 agent code is unchanged from a normal LangChain agent; Relay only observes it.
 
 The agent answers a real question ("can we run Nemotron on this tenancy?") by calling two read-only
-tools that query the tenancy: the managed Generative AI model catalog and the GPU service limits. It
-then recommends either a managed catalog model or self-hosting on OKE.
+tools that query the tenancy: the managed Generative AI model catalog and a Compute capacity report
+for the GPU shape. It then recommends either a managed catalog model or self-hosting on OKE.
 
 Everything is parameterized through environment variables; no account identifiers are hard-coded.
 """
