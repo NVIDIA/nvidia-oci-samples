@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# NVIDIA Nemotron 3.5 Lightning 30B-A3B (NVFP4) on 1 x VM.GPU.A10.2 (2 x A10 24 GB), tensor parallel 2.
+# Chart: vllm/vllm-stack 0.1.12 (https://github.com/vllm-project/production-stack).
+# Ampere runs the NVFP4 expert weights through Marlin W4A16 kernels (model card: "NVIDIA Ampere via W4A16").
+servingEngineSpec:
+  runtimeClassName: ""
+  modelSpec:
+    - name: nemotron-35-lightning
+      repository: docker.io/vllm/vllm-openai
+      tag: v0.27.1
+      modelURL: nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4
+      enableTool: true
+      toolCallParser: qwen3_coder
+      replicaCount: 1
+      requestCPU: 8
+      requestMemory: 64Gi
+      requestGPU: 2
+      shmSize: 20Gi
+      # Uncomment to pass a Hugging Face token if you hit download rate limits:
+      # hf_token: "hf_..."
+      # Schedule only onto the node pool created by create-node-pool.sh. deploy.sh overrides the value
+      # below with $NODE_POOL_NAME, so the two scripts always agree; edit it only for manual helm runs.
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: nvidia-oci-samples/pool
+              operator: In
+              values: [nemotron-lightning-a10x2]
+      vllmConfig:
+        tensorParallelSize: 2
+        maxModelLen: 65536
+        gpuMemoryUtilization: 0.92
+        enablePrefixCaching: true
+        extraArgs:
+          - --moe-backend=marlin
+          - --mamba-backend=flashinfer
+          - --kv-cache-dtype=fp8
+          - --reasoning-parser=nemotron_v3
+          - --max-num-seqs=32
+# A single engine needs no routing layer, and the router image lacks a toleration for the
+# nvidia.com/gpu taint that OKE GPU nodes carry, so it would stay Pending on a GPU-only pool.
+# Clients use the engine Service directly (see README). Enable the router only with a CPU pool.
+routerSpec:
+  enableRouter: false

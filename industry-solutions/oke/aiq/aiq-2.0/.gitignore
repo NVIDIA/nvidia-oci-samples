@@ -1,0 +1,26 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+
+# Variable files with real values (terraform.tfvars.example stays tracked)
+*.tfvars
+*.tfvars.*
+!terraform.tfvars.example
+*.auto.tfvars
+
+# .terraform.lock.hcl IS tracked (provider version pinning)
+
+# Helm
+*.tgz
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
