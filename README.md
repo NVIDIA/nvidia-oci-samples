@@ -45,12 +45,37 @@ These samples are provided as community examples and are not covered by NVIDIA E
 
 ## Samples
 
-Samples are organized by OCI service:
+New and migrated samples are organized first by use case, then by OCI service, then by NVIDIA library or stack. Existing samples that predate this structure remain at their current paths and will be reorganized separately.
+
+### Agentic
+
+- OKE / AIQ: [NVIDIA AIQ Blueprint and workshop](agentic/oke/aiq)
+- OKE / RAG: [NVIDIA RAG Blueprint and workshop](agentic/oke/rag)
+
+### Inference
+
+- OCI Data Science / NIM: [Deploy NVIDIA NIM on OCI Data Science](inference/data-science/nim)
+- OKE / NIM: [Deploy NVIDIA NIM on Oracle Kubernetes Engine](inference/oke/nim)
+
+### Training
+
+- OKE / Data Flywheel: [NVIDIA Data Flywheel Blueprint and workshop](training/oke/data-flywheel)
+
+### Industry Solutions
+
+- OKE / AIQ: [NVIDIA AIQ Blueprint and workshop](industry-solutions/oke/aiq)
+- OKE / RAG: [NVIDIA RAG Blueprint and workshop](industry-solutions/oke/rag)
+- OKE / AI Virtual Assistant: [NVIDIA AI Virtual Assistant Blueprint](industry-solutions/oke/ai-virtual-assistant)
+- OKE / VSS: [NVIDIA Video Search and Summarization Blueprint and workshop](industry-solutions/oke/video-search-and-summarization)
+
+### Existing Samples
 
 - [`oke-samples/`](./oke-samples) — Samples that run on [Oracle Container Engine for Kubernetes (OKE)](https://www.oracle.com/cloud/cloud-native/container-engine-kubernetes/).
-  - `aiq-2.0/` — NVIDIA AIQ 2.0 on OKE *(coming soon)*
+  - [`aiq-2.0/`](./oke-samples/aiq-2.0/) — NVIDIA AIQ 2.0 on OKE.
 - [`generative-ai-samples/`](./generative-ai-samples) — Samples for NVIDIA generative AI workflows on OCI.
   - [`agentic-multimodal-expense-intelligence/`](./generative-ai-samples/agentic-multimodal-expense-intelligence/) — Nemotron Parse + Omni receipt intelligence with NemoClaw-style governance controls.
+- [`flux-1-benchmarking/`](./flux-1-benchmarking/) — FLUX.1 inference benchmarking across multiple runtimes.
+- [`flux-1-quantization/`](./flux-1-quantization/) — Static NVFP4 FLUX.1 quantization with NVIDIA Model Optimizer.
 - [`nemotron-switchyard/`](./nemotron-switchyard/) — Co-locate Nemotron and Qwen on DGX Spark and route requests with NVIDIA NeMo Switchyard.
 - [`dgx-spark-samples/`](./dgx-spark-samples) — Samples that run locally on NVIDIA DGX Spark (GB10). No OCI account required.
   - [`nemotron-lightning-vllm-endpoint/`](./dgx-spark-samples/nemotron-lightning-vllm-endpoint/) — Nemotron 3.5 Lightning served as a private OpenAI-compatible endpoint, with a reproducible When2Call agentic benchmark.
