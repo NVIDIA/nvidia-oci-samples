@@ -1,0 +1,36 @@
+# =============================================================================
+# AI-Q Blueprint - OCI Helm Values Overlay (public NGC images)
+# =============================================================================
+#
+# Use with the pre-built NGC chart (aiq2-web-2.0.0.tgz) when pulling the
+# backend and frontend images directly from nvcr.io/nvidia/blueprint.
+#
+# What this overlay does (and only this):
+#   - Names `ngc-secret` as the image pull secret on backend and frontend
+#   - Pins the frontend Service to NodePort 30080 so the OCI Load Balancer
+#     (created by Terraform) can route HTTP traffic to it
+#
+# Everything else (image repos, postgres init script, default 10Gi PVC for
+# postgres dynamic-provisioned via the OKE CSI driver) uses the chart defaults.
+#
+# Usage:
+#   helm install aiq aiq2-web-2.0.0.tgz -n ns-aiq --create-namespace \
+#     -f deploy/oci/helm/values-oci-ngc.yaml
+# =============================================================================
+
+aiq:
+  apps:
+    backend:
+      imagePullSecrets:
+        - name: ngc-secret
+
+    frontend:
+      imagePullSecrets:
+        - name: ngc-secret
+      service:
+        type: NodePort
+        ports:
+          - name: http
+            port: 3000
+            targetPort: 3000
+            nodePort: 30080
