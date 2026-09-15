@@ -7,7 +7,7 @@ SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All 
 
 This sample serves [NVIDIA Nemotron 3.5 Lightning 30B-A3B (NVFP4)](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4) as a private, OpenAI-compatible endpoint on [Oracle Container Engine for Kubernetes (OKE)](https://www.oracle.com/cloud/cloud-native/container-engine-kubernetes/), on a single `VM.GPU.A10.2` worker (two NVIDIA A10, 24 GB each), using vLLM through the [vLLM Production Stack](https://github.com/vllm-project/production-stack) Helm chart.
 
-It is the OKE counterpart of the [DGX Spark sample](../../dgx-spark-samples/nemotron-lightning-vllm-endpoint/): same model, same OpenAI-compatible surface, running on Oracle Cloud GPU shapes you can provision in minutes.
+It is the OKE counterpart of the [DGX Spark sample](../../../dgx-spark/vllm/nemotron-lightning-endpoint/): same model, same OpenAI-compatible surface, running on Oracle Cloud GPU shapes you can provision in minutes.
 
 It is intentionally small and external-safe:
 
@@ -89,6 +89,13 @@ Your laptop                          OCI region
 The cluster can be one you already have or one created by `create-cluster.sh` (VCN with Internet, NAT, and Service gateways; public API endpoint; Flannel).
 
 ## Quickstart
+
+Clone the repository and enter the sample directory before running the commands below:
+
+```bash
+git clone https://github.com/NVIDIA/nvidia-oci-samples.git
+cd nvidia-oci-samples/inference/oke/vllm/nemotron-lightning-endpoint
+```
 
 ### Starting from an empty compartment (optional)
 
