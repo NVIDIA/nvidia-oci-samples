@@ -75,14 +75,14 @@ def list_genai_models(keyword: str) -> str:
 
 
 @tool
-def gpu_capacity(shape_family: str) -> str:
-    """Report remaining GPU capacity per availability domain for a shape family such as 'a10'.
+def gpu_capacity(shape: str) -> str:
+    """Check real host capacity for a GPU shape (e.g. 'VM.GPU.A10.2') per availability domain.
 
-    Uses OCI's resource-availability API (remaining `available` and `used`), not the configured
-    service-limit value, so the recommendation reflects capacity you can actually claim.
+    Uses an OCI Compute capacity report, the authoritative signal for whether a shape can actually
+    be launched now (``AVAILABLE`` vs ``OUT_OF_HOST_CAPACITY``), not a service-limit value. On-demand
+    capacity is a point-in-time reading and is not guaranteed at launch.
     """
-    print(f"  [tool] gpu_capacity(shape_family={shape_family!r})")
-    limit_name = f"gpu-{shape_family.lower()}-count"  # exact name, so 'a10' does not match 'a100'
+    print(f"  [tool] gpu_capacity(shape={shape!r})")
     ad_raw = _oci_cli(
         "iam", "availability-domain", "list", "--compartment-id", COMPARTMENT,
         "--region", REGION, "--query", "data[*].name",
@@ -96,35 +96,38 @@ def gpu_capacity(shape_family: str) -> str:
     rows = []
     for ad in ads[:10]:
         raw = _oci_cli(
-            "limits", "resource-availability", "get", "--service-name", "compute",
-            "--limit-name", limit_name, "--compartment-id", COMPARTMENT, "--availability-domain", ad,
-            "--region", REGION, "--query", "data.{available:available,used:used}",
+            "compute", "compute-capacity-report", "create", "--compartment-id", COMPARTMENT,
+            "--region", REGION, "--availability-domain", ad,
+            "--shape-availabilities", json.dumps([{"instanceShape": shape}]),
+            "--query", 'data."shape-availabilities"[0].{status:"availability-status",available:"available-count"}',
         )
         try:
             info = json.loads(raw)
         except (ValueError, TypeError):
             info = {}
-        row = {"ad": ad, "limit": limit_name}
+        row = {"ad": ad, "shape": shape}
         row.update(info if isinstance(info, dict) else {})
         rows.append(row)
-    return json.dumps({"region": REGION, "limit": limit_name, "by_ad": rows})
+    return json.dumps({"region": REGION, "shape": shape, "by_ad": rows})
 
 
 QUESTION = (
     "We want to run NVIDIA Nemotron on this OCI tenancy (requested by jane.doe@example.com). "
     "First check which Nemotron or Llama models the managed OCI Generative AI service offers here, "
-    "then check whether we have A10 GPU capacity to self-host on OKE. "
+    "then check whether the VM.GPU.A10.2 shape has host capacity to self-host on OKE. "
     "Finish with a concrete deployment recommendation."
 )
 
 SYSTEM = (
     "You are an Oracle Cloud deployment advisor. Gather real data with the tools before "
-    "answering: search the model catalog for 'nemotron' AND for 'llama', and check GPU "
-    "capacity. The two deployment paths are: (a) use a model from the managed Generative "
-    "AI catalog as-is, or (b) self-host an open-weights model such as NVIDIA Nemotron "
-    "on OKE using the tenancy's own GPU capacity. In the final recommendation (under "
-    "150 words), pick a path for running Nemotron specifically, citing the exact catalog "
-    "results and the per-AD available GPU capacity you found."
+    "answering: search the model catalog for 'nemotron' AND for 'llama', and check host "
+    "capacity for the VM.GPU.A10.2 shape. The two deployment paths are: (a) use a model "
+    "from the managed Generative AI catalog as-is, or (b) self-host an open-weights model "
+    "such as NVIDIA Nemotron on OKE using the tenancy's own GPU capacity. The capacity "
+    "check is a point-in-time Compute capacity report (AVAILABLE vs OUT_OF_HOST_CAPACITY), "
+    "not a guarantee of capacity at launch. In the final recommendation (under 150 words), "
+    "pick a path for running Nemotron specifically, citing the exact catalog results and the "
+    "per-AD capacity status you found."
 )
 
 

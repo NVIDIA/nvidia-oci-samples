@@ -1,16 +1,14 @@
   [tool] list_genai_models(keyword='nemotron')
   [tool] list_genai_models(keyword='llama')
-  [tool] gpu_capacity(shape_family='a10')
+  [tool] gpu_capacity(shape='VM.GPU.A10.2')
 
 === FINAL ANSWER ===
-Based on the search results, the managed OCI Generative AI service does not offer any Nemotron models, but it does offer several Llama models. Additionally, there is available GPU capacity in one of the availability domains to self-host NVIDIA Nemotron on OKE.
-
-Therefore, the recommended deployment path for running Nemotron is to self-host it on OKE using the available GPU capacity in availability domain EXAMPLE:US-CHICAGO-1-AD-1.
+Since there are no matches for 'nemotron' in the managed Generative AI model catalog and the VM.GPU.A10.2 shape is out of host capacity, the recommendation is to use a model from the managed Generative AI catalog as-is, such as 'meta.llama-3-70b-instruct'.
 
 ATIF trajectory written to results/advisor-trajectory.json
 final_metrics: {
-  "total_completion_tokens": 162,
-  "total_prompt_tokens": 2777,
+  "total_completion_tokens": 137,
+  "total_prompt_tokens": 3079,
   "total_steps": 5
 }
 steps: 5

@@ -10,7 +10,4 @@ Produced by running `advisor.py` as committed, against managed OCI Generative AI
 - `sample-run.txt` — the console transcript: the three tool calls and the model's final recommendation.
 - `advisor-trajectory.json` — the ATIF trajectory NeMo Relay exported: five steps, three nested tool calls, per-step token usage.
 
-Two kinds of tenancy-specific values in these captured files were replaced so the sample does not publish account data; structure, token counts, tool calls, and everything else are as produced:
-
-- The availability-domain prefix was replaced with `EXAMPLE:` (for instance `EXAMPLE:US-CHICAGO-1-AD-1`).
-- The GPU availability counts reported by `gpu_capacity` were replaced with an illustrative value (`available: 16`). Your own run shows your tenancy's real figures.
+The only edit to these captured files is that the availability-domain prefix was replaced with `EXAMPLE:` (for instance `EXAMPLE:US-CHICAGO-1-AD-1`). The Compute capacity-report status values (`OUT_OF_HOST_CAPACITY`, `HARDWARE_NOT_SUPPORTED`) are OCI host-pool readings, not tenancy data, and are shown as produced. In this run the A10.2 shape had no host capacity, so the agent recommended a managed catalog model instead of self-hosting; your own run will reflect current capacity.
