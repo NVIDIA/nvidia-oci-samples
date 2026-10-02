@@ -1,0 +1,14 @@
+  [tool] list_genai_models(keyword='nemotron')
+  [tool] list_genai_models(keyword='llama')
+  [tool] gpu_capacity(shape='VM.GPU.A10.2')
+
+=== FINAL ANSWER ===
+Neither deployment path can run NVIDIA Nemotron right now. The managed Generative AI catalog has no Nemotron model, and no availability domain has host capacity for the VM.GPU.A10.2 shape. As an alternative, you could consider using a managed Llama model, such as meta.llama-3-70b-instruct, but please note that this is not Nemotron. To run Nemotron, try another region or shape, or request GPU capacity.
+
+ATIF trajectory written to results/advisor-trajectory.json
+final_metrics: {
+  "total_completion_tokens": 166,
+  "total_prompt_tokens": 3359,
+  "total_steps": 5
+}
+steps: 5

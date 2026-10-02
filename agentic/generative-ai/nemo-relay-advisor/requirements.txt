@@ -1,0 +1,6 @@
+# The agent and the OCI Generative AI chat model.
+langchain>=1.0
+langchain-oci>=0.3.2
+# NeMo Relay records and governs the agent. 0.9.0 or newer lets you use ChatOCIGenAI directly;
+# on 0.8.x the sample's _OCIChatCompat shim is required (see advisor.py).
+nemo-relay>=0.8.4
