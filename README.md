@@ -62,6 +62,7 @@ Samples are organized first by use case, then by OCI service or deployment platf
 
 ### Industry Solutions
 
+- Oracle Database Integration: [Oracle 26ai and PAI/cuVS for NVIDIA RAG](industry-solutions/oracle-database-integration)
 - Compute / Nemotron: [Agentic multimodal expense intelligence](industry-solutions/compute/nemotron/agentic-multimodal-expense-intelligence)
 - OKE / AIQ: [Deploy NVIDIA AIQ 2.0](industry-solutions/oke/aiq/aiq-2.0)
 
