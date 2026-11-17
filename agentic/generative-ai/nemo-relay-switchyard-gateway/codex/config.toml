@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# Minimal Codex configuration used by scripts/codex_demo.sh through CODEX_HOME, so the run
+# does not inherit the plugins, MCP servers, or feature flags of your personal ~/.codex.
+# OCI Generative AI's Responses API accepts `function`, `web_search_preview`,
+# `code_interpreter`, and `mcp` tools. Codex's optional tool namespaces (apps, multi-agent,
+# goals, web search) are therefore kept off. The model comes from CODEX_MODEL (see
+# scripts/codex_demo.sh): it must be served by OCI's Responses API with multi-turn tool calls.
+
+web_search = "disabled"
+
+[features]
+apps = false
+multi_agent = false
+goals = false

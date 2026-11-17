@@ -1,0 +1,12 @@
+Switchyard routing decisions
+time         algorithm            evidence                           selected -> served
+
+Model calls recorded by Relay
+time         api                      requested      served model                                   in    out cached        USD status
+16:32:23.947 openai.responses         $CODEX_MODEL        $CODEX_MODEL                                 5480    109      0          - ERROR
+16:32:24.876 openai.responses         $CODEX_MODEL        $CODEX_MODEL                                 5633     10   5376          - ERROR
+
+Totals by served model
+served model                               calls      in     out        USD
+$CODEX_MODEL                                   2   11113     119   0.000000  (2 call(s) without a catalog price)
+total                                                              0.000000
