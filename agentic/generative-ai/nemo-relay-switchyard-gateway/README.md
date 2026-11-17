@@ -148,7 +148,7 @@ Codex needs a model that OCI serves through the Responses API with a multi-turn 
 
 Codex also calls `GET /v1/models`, which OCI does not serve; Codex logs the 404 and continues with fallback model metadata.
 
-Relay records Responses API calls to OCI with their full content and usage, but Relay 0.11.1 sometimes marks them `ERROR` with `stream ended before its final response event`, even though Codex received the complete answer and the recorded response carries `completed_at`. OCI's Responses stream sends the event type only inside each `data:` payload, with no SSE `event:` lines, which is the likely trigger. Chat Completions calls are not affected.
+With the Switchyard plugin loaded, Relay 0.11.1 marks roughly half of the streamed Responses API calls `ERROR` with `stream ended before its final response event`, even though the client received `response.completed` and the recorded response carries its content, usage, and `completed_at`. The same calls are `OK` without the plugin, and the behaviour reproduces against a local mock server, so it is not specific to OCI. Chat Completions calls, which is what the Switchyard routes use, are not affected.
 
 ## Notes
 
