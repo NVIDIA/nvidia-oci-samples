@@ -32,9 +32,11 @@ id = "xai.grok-4.7"
 llm_client = "oci"
 reasoning_effort = "low"
 
-# Judge for the task route: Llama 4 Maverick returns fast, schema-valid verdicts.
+# Judge for the task route: Llama 4 Scout returns schema-valid verdicts in about half a second.
+# Llama 4 Maverick is as fast but mislabels the capability boundary on tool-style tasks, which
+# Switchyard rejects as an invalid verdict and fails open to the capable model (see README).
 [plugins.dynamic.config.switchyard_config.targets.judge]
-id = "meta.llama-4-maverick-17b-128e-instruct-fp8"
+id = "meta.llama-4-scout-17b-16e-instruct"
 llm_client = "oci"
 
 # Fixed policies, for comparison. Clients select a route by requesting its id as the model.

@@ -2,8 +2,8 @@
 
 **Switchyard routes** in relay/plugins.toml.in:
 
-- `oci/efficient` → target `efficient`
-- `oci/capable` → target `capable`
-- `oci/auto` → `efficient_target` `efficient`, `capable_target` `capable`
-- `oci/task` → `classifier_target` `judge`, `strong_target` `capable`, `weak_target` `efficient`
-- `oci/codex` → target `codex`
+- **oci/efficient** (`efficient_only`) → target `efficient` (openai.gpt-oss-120b)
+- **oci/capable** (`capable_only`) → target `capable` (xai.grok-4.7)
+- **oci/auto** (`auto`) → efficient_target `efficient`, capable_target `capable`
+- **oci/task** (`task`) → classifier_target `judge`, weak_target `efficient`, strong_target `capable`
+- **oci/codex** (`codex`) → target `codex` (`@CODEX_MODEL@`)

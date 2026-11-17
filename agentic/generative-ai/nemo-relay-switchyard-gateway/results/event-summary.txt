@@ -1,25 +1,25 @@
 Switchyard routing decisions
 time         algorithm            evidence                           selected -> served
-17:29:31.978 passthrough          -                                  openai.gpt-oss-120b -> openai.gpt-oss-120b
-17:29:36.971 passthrough          -                                  xai.grok-4.7 -> xai.grok-4.7
-17:29:38.346 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
-17:29:39.538 llm_task_classifier  score=0.95, source=llm-classifier, threshold=0.5 openai.gpt-oss-120b -> openai.gpt-oss-120b
-17:29:41.289 llm_task_classifier  score=0.9, source=llm-classifier, threshold=0.5 openai.gpt-oss-120b -> openai.gpt-oss-120b
-17:30:08.910 llm_task_classifier  score=0.0, source=llm-classifier, threshold=0.7 xai.grok-4.7 -> xai.grok-4.7
+17:55:21.260 passthrough          -                                  openai.gpt-oss-120b -> openai.gpt-oss-120b
+17:55:28.949 passthrough          -                                  xai.grok-4.7 -> xai.grok-4.7
+17:55:30.429 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+17:55:31.421 llm_task_classifier  score=1.0, source=llm-classifier, threshold=0.5 openai.gpt-oss-120b -> openai.gpt-oss-120b
+17:55:33.548 llm_task_classifier  score=0.9, source=llm-classifier, threshold=0.5 openai.gpt-oss-120b -> openai.gpt-oss-120b
+17:55:49.210 llm_task_classifier  score=0.0, source=llm-classifier, threshold=0.6 xai.grok-4.7 -> xai.grok-4.7
 
 Model calls recorded by Relay
 time         api                      requested      served model                                   in    out cached        USD status
-17:29:31.979 openai.chat_completions  oci/efficient  openai.gpt-oss-120b                            86     57      0   0.000047 OK
-17:29:36.971 openai.chat_completions  oci/capable    xai.grok-4.7                                 1261     10   1152   0.000854 OK
-17:29:38.346 openai.chat_completions  oci/auto       openai.gpt-oss-120b                            79    170      0   0.000114 OK
-17:29:39.539 openai.chat_completions  oci/task       openai.gpt-oss-120b                            86     76      0   0.000058 OK
-17:29:41.290 openai.chat_completions  oci/task       openai.gpt-oss-120b                            79    146      0   0.000099 OK
-17:30:08.910 openai.chat_completions  oci/task       xai.grok-4.7                                 1288    600   1152   0.004448 OK
-17:30:10.169 openai.chat_completions  openai.gpt-oss-20b openai.gpt-oss-20b                             86    206      0   0.000068 OK
+17:55:21.260 openai.chat_completions  oci/efficient  openai.gpt-oss-120b                            86     51      0   0.000044 OK
+17:55:28.949 openai.chat_completions  oci/capable    xai.grok-4.7                                 1261     10   1152   0.000854 OK
+17:55:30.429 openai.chat_completions  oci/auto       openai.gpt-oss-120b                            79    141      0   0.000096 OK
+17:55:31.421 openai.chat_completions  oci/task       openai.gpt-oss-120b                            86     52      0   0.000044 OK
+17:55:33.548 openai.chat_completions  oci/task       openai.gpt-oss-120b                            79    145      0   0.000099 OK
+17:55:49.210 openai.chat_completions  oci/task       xai.grok-4.7                                 1288    600   1280   0.004256 OK
+17:55:50.098 openai.chat_completions  openai.gpt-oss-20b openai.gpt-oss-20b                             86    198      0   0.000065 OK
 
 Totals by served model
 served model                               calls      in     out        USD
-xai.grok-4.7                                   2    2549     610   0.005302
-openai.gpt-oss-120b                            4     330     449   0.000319
-openai.gpt-oss-20b                             1      86     206   0.000068
-total                                                              0.005689
+xai.grok-4.7                                   2    2549     610   0.005110
+openai.gpt-oss-120b                            4     330     389   0.000283
+openai.gpt-oss-20b                             1      86     198   0.000065
+total                                                              0.005458
