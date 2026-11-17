@@ -68,6 +68,16 @@ strong_target = "capable"
 weak_target = "efficient"
 base_threshold = 0.5
 threshold_step = 0.1
+# Judge once per task and hold that target through the tool calls that follow, as in NVIDIA's
+# model-routing guide. The default judges every request, so an agent task can change model
+# between tool steps. The demo clients send no x-switchyard-session-id, so the fallback keys
+# the held selection on the first user message; repeating a prompt against a running gateway
+# therefore reuses the earlier decision without a new judge call. Plugin 0.3.2 accepts the
+# fallback only with new_session.
+classify_trigger = "new_session"
+message_hash_fallback = true
+# OCI serves JSON Schema structured output for Llama 4 Scout, so the default
+# response_format_type = "json_schema" stays; providers without it need "json_object".
 prompt = """
 Forecast whether the efficient model, a small instruction-following text model with no tools and at
 most 512 output tokens, will satisfy EVERY material requirement of the task in one answer. Treat the

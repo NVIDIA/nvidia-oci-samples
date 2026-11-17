@@ -1,37 +1,33 @@
 Switchyard routing decisions
 time         algorithm            evidence                           selected -> served
-18:06:19.894 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
-18:06:20.387 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
-18:06:20.773 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
-18:06:21.207 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
-18:06:21.915 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
-18:06:23.159 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
-18:06:26.533 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
-18:06:32.710 llm_task_classifier  reason_code=invalid_verdict, source=fail_open xai.grok-4.7 -> xai.grok-4.7
-18:06:36.408 llm_task_classifier  score=0.9, source=llm-classifier, threshold=0.5 openai.gpt-oss-120b -> openai.gpt-oss-120b
-18:06:41.100 passthrough          -                                  xai.grok-4.7 -> xai.grok-4.7
-18:06:43.017 passthrough          -                                  xai.grok-4.7 -> xai.grok-4.7
+22:17:19.902 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+22:17:20.312 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+22:17:20.843 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+22:17:21.836 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+22:17:25.651 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+22:17:30.467 llm_task_classifier  score=0.0, source=llm-classifier, threshold=0.6 xai.grok-4.7 -> xai.grok-4.7
+22:17:33.546 llm_task_classifier  source=retained                    xai.grok-4.7 -> xai.grok-4.7
+22:17:38.161 passthrough          -                                  xai.grok-4.7 -> xai.grok-4.7
+22:17:43.076 passthrough          -                                  xai.grok-4.7 -> xai.grok-4.7
 
 Model calls recorded by Relay
 time         api                      requested      served model                                   in    out cached        USD status
-18:06:19.894 openai.chat_completions  oci/auto       openai.gpt-oss-120b                           277     65      0   0.000081 OK
-18:06:20.387 openai.chat_completions  oci/auto       openai.gpt-oss-120b                           397     42      0   0.000085 OK
-18:06:20.773 openai.chat_completions  oci/auto       openai.gpt-oss-120b                           995     39      0   0.000173 OK
-18:06:21.207 openai.chat_completions  oci/auto       openai.gpt-oss-120b                          1615     46      0   0.000270 OK
-18:06:21.915 openai.chat_completions  oci/auto       openai.gpt-oss-120b                          2242     89      0   0.000390 OK
-18:06:23.159 openai.chat_completions  oci/auto       openai.gpt-oss-120b                          2911     65      0   0.000476 OK
-18:06:26.533 openai.chat_completions  oci/auto       openai.gpt-oss-120b                          4354    437      0   0.000915 OK
-18:06:32.710 openai.chat_completions  oci/task       xai.grok-4.7                                 1492     25   1152   0.001406 OK
-18:06:36.408 openai.chat_completions  oci/task       openai.gpt-oss-120b                          1752    414      0   0.000511 OK
-18:06:41.100 openai.chat_completions  oci/capable    xai.grok-4.7                                 1492     25   1408   0.001022 OK
-18:06:43.017 openai.chat_completions  oci/capable    xai.grok-4.7                                 3103    136   3072   0.002414 OK
+22:17:19.903 openai.chat_completions  oci/auto       openai.gpt-oss-120b                           277     64      0   0.000080 OK
+22:17:20.312 openai.chat_completions  oci/auto       openai.gpt-oss-120b                           396     42      0   0.000085 OK
+22:17:20.844 openai.chat_completions  oci/auto       openai.gpt-oss-120b                           994     47      0   0.000177 OK
+22:17:21.836 openai.chat_completions  oci/auto       openai.gpt-oss-120b                          1599     95      0   0.000297 OK
+22:17:25.651 openai.chat_completions  oci/auto       openai.gpt-oss-120b                          3255    449      0   0.000758 OK
+22:17:30.468 openai.chat_completions  oci/task       xai.grok-4.7                                 1492     25   1152   0.001406 OK
+22:17:33.546 openai.chat_completions  oci/task       xai.grok-4.7                                 3286    145   1408   0.005330 OK
+22:17:38.161 openai.chat_completions  oci/capable    xai.grok-4.7                                 1492     25   1408   0.001022 OK
+22:17:43.077 openai.chat_completions  oci/capable    xai.grok-4.7                                 3286    136   3200   0.002588 OK
 
 Switchyard judge calls (routing decisions; not priced by the catalog)
 judge model                                calls      in     out
-meta.llama-4-scout-17b-16e-instruct            2     464     258
+meta.llama-4-scout-17b-16e-instruct            1     232      57
 
 Totals by served model (judge calls excluded)
 served model                               calls      in  cached     out        USD
-xai.grok-4.7                                   3    6087    5632     186   0.004842
-openai.gpt-oss-120b                            8   14543       0    1197   0.002900
-total                                                                      0.007742
+xai.grok-4.7                                   4    9556    7168     331   0.010346
+openai.gpt-oss-120b                            5    6521       0     697   0.001396
+total                                                                      0.011742

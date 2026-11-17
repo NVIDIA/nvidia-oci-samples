@@ -1,11 +1,19 @@
-**Switchyard routes defined in `relay/plugins.toml.in`**
+**scripts/**
 
-| Route ID | Target(s) used |
-|----------|----------------|
+- adk_demo.py
+- codex_demo.sh
+- env.sh
+- gateway.sh
+- route_demo.py
+- setup.sh
+- summarize_events.py
+
+**Switchyard routes** (`relay/plugins.toml.in`)
+
+| Route id | Target(s) |
+|---|---|
 | `oci/efficient` | `efficient` |
 | `oci/capable` | `capable` |
-| `oci/auto` | `efficient_target = efficient` ; `capable_target = capable` |
-| `oci/task` | `weak_target = efficient` ; `strong_target = capable` ; `classifier_target = judge` |
+| `oci/auto` | `efficient` (start), `capable` (escalate) |
+| `oci/task` | judge: `judge`; strong: `capable`; weak: `efficient` |
 | `oci/codex` | `codex` |
-
-These are the only `[plugins.dynamic.config.switchyard_config.routes.*]` sections present, each linking a route ID to one or more target identifiers as shown.

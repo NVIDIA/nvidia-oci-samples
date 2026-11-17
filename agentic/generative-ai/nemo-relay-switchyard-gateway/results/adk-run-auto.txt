@@ -1,11 +1,18 @@
+**Files under `scripts/`**  
+- adk_demo.py  
+- codex_demo.sh  
+- env.sh  
+- gateway.sh  
+- route_demo.py  
+- setup.sh  
+- summarize_events.py  
+
 **Switchyard routes defined in `relay/plugins.toml.in`**
 
-| Route ID | Target(s) Used |
+| Route ID | Target(s) used |
 |----------|----------------|
 | `oci/efficient` | `efficient` (passthrough) |
-| `oci/capable` | `capable` (passthrough) |
-| `oci/auto` | `efficient` (as *efficient_target*), `capable` (as *capable_target*) – auto‑selection between them |
-| `oci/task` | `judge` (as *classifier_target*), `efficient` (as *weak_target*), `capable` (as *strong_target*) – classifier‑driven routing |
-| `oci/codex` | `codex` (passthrough) |
-
-These are the only `[plugins.dynamic.config.switchyard_config.routes.*]` sections present in the file.
+| `oci/capable`   | `capable` (passthrough) |
+| `oci/auto`      | `efficient` (weak) → `capable` (capable_target) – auto‑selection |
+| `oci/task`      | `efficient` (weak_target) ↔ `capable` (strong_target) – classifier‑based |
+| `oci/codex`     | `codex` (passthrough) |

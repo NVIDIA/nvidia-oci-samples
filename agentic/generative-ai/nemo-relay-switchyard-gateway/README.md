@@ -22,14 +22,14 @@ Everything here is external-safe: no keys, OCIDs, or tenancy details. The API ke
  Google ADK agent ──┼─▶ NeMo Relay gateway ───▶│ oci/efficient  → openai.gpt-oss-120b        │──▶ OCI Generative AI
  Codex (Responses) ─┤   127.0.0.1:4040         │ oci/capable    → xai.grok-4.7               │    OpenAI-compatible
                     │   • ATOF events          │ oci/auto       → tool evidence decides      │    endpoint, one region
-                    │   • pricing catalog      │ oci/task       → judge (Llama 4 Maverick)   │
+                    │   • pricing catalog      │ oci/task       → judge (Llama 4 Scout)      │
                     │                          │ oci/codex      → CODEX_MODEL (Responses API)│
                     │                          └───────────────────────────────────────────┘
                     └─▶ direct model id (e.g. openai.gpt-oss-20b) → forwarded as-is ─────────▶
 ```
 
 - Clients select a route by requesting its id as the model name. Anything else is forwarded to OCI unchanged.
-- `oci/task` asks a judge model whether the efficient model can satisfy the request and escalates on a low score. `oci/auto` starts on the efficient model and escalates on tool evidence, with no judge call.
+- `oci/task` asks a judge model once per task whether the efficient model can satisfy the request, escalates on a low score, and holds that choice through the tool calls that follow. `oci/auto` starts on the efficient model and escalates on tool evidence, with no judge call.
 - Relay records every call, the Switchyard decision marks (algorithm, evidence, selected and served model), and the USD estimate from the catalog in `logs/events.jsonl`.
 
 ## Requirements
@@ -81,13 +81,13 @@ python3 scripts/summarize_events.py
 
 ```text
 route          prompt  served model                 in    out      ms  answer
-oci/efficient  easy    openai.gpt-oss-120b           86    144    1322  The Quick Brown Fox Jumps over the Lazy Dog
-oci/capable    easy    xai.grok-4.7                1261     10    4204  The Quick Brown Fox Jumps Over The Lazy Dog
-oci/auto       medium  openai.gpt-oss-120b           79    135    1425  TCP uses a three-way handshake to reliably s ...
-oci/task       easy    openai.gpt-oss-120b           86    286    2621  The Quick Brown Fox Jumps Over the Lazy Dog
-oci/task       medium  openai.gpt-oss-120b           79    159    2224  TCP's three-way handshake lets both ends fir ...
-oci/task       hard    xai.grok-4.7                1288    600   20094  A practical C11 MPMC bounded queue is a powe ...
-(direct)       easy    openai.gpt-oss-20b            86    362    2034  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/efficient  easy    openai.gpt-oss-120b           86     63     692  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/capable    easy    xai.grok-4.7                1261     10    4451  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/auto       medium  openai.gpt-oss-120b           79    145    1818  TCP's three-way handshake lets the two endpo ...
+oci/task       easy    openai.gpt-oss-120b           86     52     883  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/task       medium  openai.gpt-oss-120b           79    165    2539  TCP's three-way handshake lets both endpoint ...
+oci/task       hard    xai.grok-4.7                1288    600   29603  A correct C11 MPMC bounded queue is a ring o ...
+(direct)       easy    openai.gpt-oss-20b            86    223    1256  The Quick Brown Fox Jumps Over the Lazy Dog
 ```
 
 `scripts/summarize_events.py` reads the ATOF log and shows why each request went where it went, and what it cost ([`results/event-summary.txt`](./results/event-summary.txt)):
@@ -95,34 +95,34 @@ oci/task       hard    xai.grok-4.7                1288    600   20094  A practi
 ```text
 Switchyard routing decisions
 time         algorithm            evidence                                           selected -> served
-18:05:48.144 stage_router         source=fall_open                                   openai.gpt-oss-120b -> openai.gpt-oss-120b
-18:05:50.765 llm_task_classifier  score=1.0, source=llm-classifier, threshold=0.5    openai.gpt-oss-120b -> openai.gpt-oss-120b
-18:05:52.990 llm_task_classifier  score=0.9, source=llm-classifier, threshold=0.5    openai.gpt-oss-120b -> openai.gpt-oss-120b
-18:06:13.085 llm_task_classifier  score=0.0, source=llm-classifier, threshold=0.6    xai.grok-4.7 -> xai.grok-4.7
+22:16:17.142 stage_router         source=fall_open                                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+22:16:18.027 llm_task_classifier  score=1.0, source=llm-classifier, threshold=0.5    openai.gpt-oss-120b -> openai.gpt-oss-120b
+22:16:20.567 llm_task_classifier  score=0.9, source=llm-classifier, threshold=0.5    openai.gpt-oss-120b -> openai.gpt-oss-120b
+22:16:50.170 llm_task_classifier  score=0.0, source=llm-classifier, threshold=0.6    xai.grok-4.7 -> xai.grok-4.7
 
 Totals by served model
 served model           calls      in  cached     out        USD
-xai.grok-4.7               2    2549    2432     610   0.005110
-openai.gpt-oss-120b        4     330       0     724   0.000484
-openai.gpt-oss-20b         1      86       0     362   0.000115
-total                                                  0.005709
+xai.grok-4.7               2    2549    2304     610   0.005302
+openai.gpt-oss-120b        4     330       0     425   0.000305
+openai.gpt-oss-20b         1      86       0     223   0.000073
+total                                                  0.005679
 ```
 
-The judge rated the easy and medium prompts as within the efficient model's reach (scores 1.0 and 0.9) and the lock-free queue design as not (score 0.0), so only that request paid for Grok 4.7. The two Grok calls account for 90% of the run's cost. The `status` column carries Relay's per-call status; all seven calls are `OK`.
+The judge rated the easy and medium prompts as within the efficient model's reach (scores 1.0 and 0.9) and the lock-free queue design as not (score 0.0), so only that request paid for Grok 4.7. The two Grok calls account for 93% of the run's cost. The `status` column carries Relay's per-call status; all seven calls are `OK`.
 
 `scripts/adk_demo.py` asks the same question on three routes: list the sample's scripts, then read `relay/plugins.toml.in` and report every route and its target. All three answers were correct in the captured run ([`results/adk-run-*.txt`](./results/)); the cost of getting there differs ([`results/adk-gateway-summary.txt`](./results/adk-gateway-summary.txt)):
 
 | Route | Model calls | Served by | USD |
 |---|---|---|---|
-| `oci/auto` | 7 | gpt-oss-120b for all 7 | 0.0024 |
-| `oci/task` | 2 | Grok 4.7, then gpt-oss-120b | 0.0019 plus 2 judge calls* |
-| `oci/capable` | 2 | Grok 4.7 for both | 0.0034 |
+| `oci/auto` | 5 | gpt-oss-120b for all 5 | 0.0014 |
+| `oci/task` | 2 | Grok 4.7 for both | 0.0067 plus 1 judge call* |
+| `oci/capable` | 2 | Grok 4.7 for both | 0.0036 |
 
 \* Judge calls run inside the Switchyard plugin on Llama 4 Scout, which OCI bills per character, so the catalog cannot price them; the summarizer lists their count and tokens separately and marks the totals as excluding them.
 
-On the `oci/task` run the judge decided each agent turn separately: turn 1 scored invalid and went to Grok 4.7; turn 2 scored 0.9 and went to gpt-oss-120b. Scores at or above the threshold (0.5, raised to 0.6 once tool results are in the conversation) stay on the efficient model. Judge verdicts vary between runs, so the split on `oci/task` moves from run to run, while `oci/auto` stays on the efficient model (read-only tool results never trigger its escalation) and `oci/capable` always pays for Grok 4.7. The in-process log ([`results/adk-event-summary-*.txt`](./results/)) shows the agent, tool, and model scopes with the same USD figures, because `relay/plugins-inprocess.toml` loads the same catalog.
+On the `oci/task` run the judge ran once and its choice was held for the rest of the task: turn 1 scored 0.0 and went to Grok 4.7; turn 2 reused that selection (`source=retained`). With a 0.0 score the whole task ran on Grok 4.7, the same models as `oci/capable`; the cost gap between those two rows is prompt-cache hits (1408 versus 3200 cached tokens on the second turn), not routing. Scores at or above the threshold (0.5, raised to 0.6 once tool results are in the conversation) stay on the efficient model. Judge verdicts vary between runs, so the split on `oci/task` moves from run to run, while `oci/auto` stays on the efficient model (read-only tool results never trigger its escalation) and `oci/capable` always pays for Grok 4.7. The in-process log ([`results/adk-event-summary-*.txt`](./results/)) shows the agent, tool, and model scopes with the same USD figures, because `relay/plugins-inprocess.toml` loads the same catalog.
 
-**Judge model choice.** Switchyard rejects a capability verdict whose `primary_rule` and `capability_boundary` disagree, or whose `crux` is empty, and fails open to the capable model with `reason_code=invalid_verdict`. On the agent-style prompt above, Llama 4 Maverick produced an invalid verdict in 5 of 6 tries; Llama 4 Scout was valid in 6 of 6 at about 0.5 s per verdict, which is why the sample uses Scout. Invalid verdicts still happen with Scout (the captured ADK run has one), and each one fails open to the capable model, so they cost money rather than answer quality. [NVIDIA-NeMo/Switchyard#1334](https://github.com/NVIDIA-NeMo/Switchyard/issues/1334) proposes deriving the boundary from the rule label instead of rejecting the verdict. `openai.gpt-oss-120b` and `google.gemini-2.5-flash` were valid on all 8 mixed prompts we tried but take 2.4 to 2.7 s per verdict. Judge calls are not priced by the catalog (Llama is billed per 10,000 transactions on OCI).
+**Judge model choice.** Switchyard rejects a capability verdict whose `primary_rule` and `capability_boundary` disagree, or whose `crux` is empty, and fails open to the capable model with `reason_code=invalid_verdict`. On the agent-style prompt above, Llama 4 Maverick produced an invalid verdict in 5 of 6 tries; Llama 4 Scout was valid in 6 of 6 at about 0.5 s per verdict, which is why the sample uses Scout. Invalid verdicts still happen with Scout (an earlier run of the same agent produced one), and each one fails open to the capable model, so they cost money rather than answer quality. [NVIDIA-NeMo/Switchyard#1334](https://github.com/NVIDIA-NeMo/Switchyard/issues/1334) proposes deriving the boundary from the rule label instead of rejecting the verdict. `openai.gpt-oss-120b` and `google.gemini-2.5-flash` were valid on all 8 mixed prompts we tried but take 2.4 to 2.7 s per verdict. Judge calls are not priced by the catalog (Llama is billed per 10,000 transactions on OCI).
 
 The Codex run requests the `oci/codex` route, creates a file through a tool call, and answers; both Responses API calls and their routing decisions are recorded ([`results/codex-run.txt`](./results/codex-run.txt), [`results/codex-event-summary.txt`](./results/codex-event-summary.txt)). The model used there is not in the public price list, so those two calls carry no cost.
 
@@ -147,10 +147,12 @@ Relay never stores the OCI key. Three paths carry it:
 | `oci/efficient` | `passthrough` | Always `openai.gpt-oss-120b`. |
 | `oci/capable` | `passthrough` | Always `xai.grok-4.7`, with `reasoning_effort = "low"` to keep the demo interactive. |
 | `oci/auto` | `auto` | Switchyard's stage router: efficient first, escalates on tool-call evidence. No judge call. |
-| `oci/task` | `llm_classifier` (capability mode) | Llama 4 Scout forecasts whether the efficient model can satisfy the task; low scores go to the capable model. |
+| `oci/task` | `llm_classifier` (capability mode) | Llama 4 Scout forecasts whether the efficient model can satisfy the task; low scores go to the capable model. The judge runs once per task and the choice is held for the tool calls that follow. |
 | `oci/codex` | `passthrough` | A Responses-format client (`format = "openai_responses"`) whose target is rendered from `CODEX_MODEL`. |
 
 Swap model ids for any others your region serves. The Switchyard [TOML schema](https://github.com/NVIDIA-NeMo/Switchyard/blob/release/0.3/docs/reference/toml_schema.md) documents the other route types.
+
+The task route follows NVIDIA's [model-routing guide for Relay](https://github.com/NVIDIA/NeMo-Relay/blob/main/docs/user-guides/evaluate-model-routing-with-switchyard.mdx) where OCI allows it. The judge runs once per task and the selection is held for the tool calls that follow (`classify_trigger = "new_session"` with `message_hash_fallback = true`, because the demo clients send no `x-switchyard-session-id`; repeating a prompt against a running gateway therefore reuses the earlier decision without a new judge call). Two settings differ on purpose. The verdict format stays at the default `json_schema`, since OCI serves JSON Schema structured output for Llama 4 Scout; the guide's `json_object` is for providers without it. The threshold stays at 0.5 with a 0.1 step, tuned on the verdicts this judge returns for these prompts, rather than the guide's 0.8.
 
 ### Pricing
 

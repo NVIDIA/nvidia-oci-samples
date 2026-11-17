@@ -1,9 +1,9 @@
 **scripts/:** adk_demo.py, codex_demo.sh, env.sh, gateway.sh, route_demo.py, setup.sh, summarize_events.py
 
-**Switchyard routes in relay/plugins.toml.in:**
+**Switchyard routes** in relay/plugins.toml.in:
 
 - `oci/efficient` → target `efficient`
 - `oci/capable` → target `capable`
-- `oci/auto` → `capable_target` `capable`, `efficient_target` `efficient`
-- `oci/task` → `classifier_target` `judge`, `strong_target` `capable`, `weak_target` `efficient`
+- `oci/auto` → `efficient_target` `efficient`, `capable_target` `capable`
+- `oci/task` → `classifier_target` `judge`, `weak_target` `efficient`, `strong_target` `capable`
 - `oci/codex` → target `codex`
