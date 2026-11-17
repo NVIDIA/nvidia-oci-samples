@@ -8,12 +8,14 @@
 #
 #   OCI_GENAI_REGION        OCI Generative AI region (default: us-chicago-1)
 #   SWITCHYARD_PLUGIN_TAG   NeMo-Relay-Plugins release tag (default: switchyard-plugin-0.3.2)
+#   CODEX_MODEL             target of the oci/codex route (default: openai.gpt-oss-120b; see README)
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=env.sh
 . "$HERE/scripts/env.sh"
 : "${OCI_GENAI_REGION:=us-chicago-1}"
 : "${SWITCHYARD_PLUGIN_TAG:=switchyard-plugin-0.3.2}"
+: "${CODEX_MODEL:=openai.gpt-oss-120b}"
 
 command -v nemo-relay >/dev/null || { echo "nemo-relay CLI not found on PATH; install it first (see README)." >&2; exit 1; }
 command -v python3 >/dev/null || { echo "python3 is required." >&2; exit 1; }
@@ -28,9 +30,9 @@ if ! grep -qs 'switchyard-plugin' "$CFG/plugins.toml"; then
   nemo-relay plugins install --user "github:NVIDIA/NeMo-Relay-Plugins@$SWITCHYARD_PLUGIN_TAG" --no-enable
 fi
 
-python3 - "$CFG/plugins.toml" "$HERE/relay/plugins.toml.in" "$OCI_GENAI_REGION" "$HERE/pricing/oci-genai-pricing.json" <<'PY'
+python3 - "$CFG/plugins.toml" "$HERE/relay/plugins.toml.in" "$OCI_GENAI_REGION" "$HERE/pricing/oci-genai-pricing.json" "$CODEX_MODEL" <<'PY'
 import sys
-path, template, region, catalog = sys.argv[1:5]
+path, template, region, catalog, codex_model = sys.argv[1:6]
 marker = "# Appended by scripts/setup.sh"
 installed = open(path).read()
 if marker in installed:
@@ -38,9 +40,10 @@ if marker in installed:
     head = installed[: installed.index(marker)]
     head = head[: head.rfind("# ----")] if "# ----" in head else head
     installed = head.rstrip() + "\n"
-rendered = open(template).read().replace("@OCI_GENAI_REGION@", region).replace("@PRICING_CATALOG@", catalog)
+rendered = (open(template).read().replace("@OCI_GENAI_REGION@", region)
+            .replace("@PRICING_CATALOG@", catalog).replace("@CODEX_MODEL@", codex_model))
 open(path, "w").write(installed.rstrip() + "\n" + rendered)
-print(f"Rendered {path} for region {region}")
+print(f"Rendered {path} for region {region}; oci/codex -> {codex_model}")
 PY
 
 nemo-relay plugins enable nvidia.switchyard

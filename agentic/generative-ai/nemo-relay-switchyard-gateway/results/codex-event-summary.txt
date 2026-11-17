@@ -1,14 +1,18 @@
-# Note: the ERROR status on these two streamed Responses calls is the Relay 0.11.1 + Switchyard plugin
-# behaviour described in the README; the content and usage were recorded and Codex received both answers.
+Agent and tool scopes
+17:30:20.981 tool   Bash
+17:30:22.052 agent  codex-task
+
 Switchyard routing decisions
 time         algorithm            evidence                           selected -> served
+17:30:19.728 passthrough          -                                  $CODEX_MODEL        -> $CODEX_MODEL       
+17:30:21.434 passthrough          -                                  $CODEX_MODEL        -> $CODEX_MODEL       
 
 Model calls recorded by Relay
 time         api                      requested      served model                                   in    out cached        USD status
-16:32:23.947 openai.responses         $CODEX_MODEL        $CODEX_MODEL                                 5480    109      0          - ERROR
-16:32:24.876 openai.responses         $CODEX_MODEL        $CODEX_MODEL                                 5633     10   5376          - ERROR
+17:30:20.697 openai.responses         oci/codex      $CODEX_MODEL                                 5480    110      0          - OK
+17:30:22.002 openai.responses         oci/codex      $CODEX_MODEL                                 5634     10   5376          - OK
 
 Totals by served model
 served model                               calls      in     out        USD
-$CODEX_MODEL                                   2   11113     119   0.000000  (2 call(s) without a catalog price)
+$CODEX_MODEL                                   2   11114     120   0.000000  (2 call(s) without a catalog price)
 total                                                              0.000000

@@ -1,28 +1,30 @@
-# Captured 2026-11-17 with scripts/codex_demo.sh. The model id is shown as $CODEX_MODEL: the run
-# used an OpenAI GPT-5-series model enabled in our tenancy (see README, "Codex and model choice").
+# Captured 2026-11-17 with scripts/codex_demo.sh. Codex requests the Switchyard route oci/codex; the
+# route target is shown as $CODEX_MODEL: the run used an OpenAI GPT-5-series model enabled in our
+# tenancy (see README, "Codex and model choice").
+Rendering the oci/codex route for $CODEX_MODEL ...
 OpenAI Codex v0.166.0
 --------
 workdir: <sample dir>/.relay/codex-work
-model: $CODEX_MODEL
+model: oci/codex
 provider: nemo-relay-openai
 approval: never
 sandbox: workspace-write [workdir, /tmp, $TMPDIR] (network access enabled)
 reasoning effort: none
 reasoning summaries: none
-session id: 01a1ea5a-333b-7291-9171-5e86aa151e9c
+session id: 01a1ea8f-3ddf-7c53-a92d-5e328b35451f
 --------
 user
 Use a file-writing tool to create relay-check.txt in the current working directory containing exactly RELAY_OCI_TOOL_OK. Then reply with RELAY_OCI_RESPONSE_OK.
-warning: Model metadata for `$CODEX_MODEL` not found. Defaulting to fallback metadata; this can degrade performance and cause issues.
+warning: Model metadata for `oci/codex` not found. Defaulting to fallback metadata; this can degrade performance and cause issues.
 codex
-I’ll create the file now, then confirm with the exact response.
+I’ll create the file with the exact requested contents, then confirm back.
 exec
 /bin/zsh -lc "printf 'RELAY_OCI_TOOL_OK' > relay-check.txt" in <sample dir>/.relay/codex-work
  succeeded in 0ms:
 codex
 RELAY_OCI_RESPONSE_OK
 tokens used
-5,856
+5,858
 RELAY_OCI_RESPONSE_OK
 relay-check.txt: RELAY_OCI_TOOL_OK
 Events: <sample dir>/logs/events.jsonl  (summarize with scripts/summarize_events.py)

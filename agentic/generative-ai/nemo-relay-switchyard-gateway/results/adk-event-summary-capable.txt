@@ -1,0 +1,19 @@
+Agent and tool scopes
+17:31:23.862 tool   list_directory
+17:31:23.862 tool   read_file
+17:31:26.007 agent  repo_inspector
+17:31:26.008 agent  adk-invocation:repo_inspector_app
+17:31:26.008 agent  adk-request
+
+Switchyard routing decisions
+time         algorithm            evidence                           selected -> served
+
+Model calls recorded by Relay
+time         api                      requested      served model                                   in    out cached        USD status
+17:31:23.856 openai                   openai/oci/capable xai.grok-4.7                                 1492     25   1152   0.001406 OK
+17:31:26.005 openai                   openai/oci/capable xai.grok-4.7                                 3062    136   1408   0.004828 OK
+
+Totals by served model
+served model                               calls      in     out        USD
+xai.grok-4.7                                   2    4554     161   0.006234
+total                                                              0.006234

@@ -24,6 +24,12 @@ def main() -> int:
     path = sys.argv[1] if len(sys.argv) > 1 else "logs/events.jsonl"
     events = load(path)
 
+    agent_tool = [e for e in events if e.get("kind") == "scope" and e.get("scope_category") == "end" and e.get("category") in ("agent", "tool")]
+    if agent_tool:
+        print("Agent and tool scopes")
+        for e in agent_tool:
+            print(f"{e['timestamp'][11:23]:12s} {e.get('category', ''):6s} {e.get('name', '')}")
+        print()
     print("Switchyard routing decisions")
     print(f"{'time':12s} {'algorithm':20s} {'evidence':34s} {'selected -> served'}")
     for e in events:

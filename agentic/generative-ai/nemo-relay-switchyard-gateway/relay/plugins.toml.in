@@ -80,6 +80,23 @@ Use primary_rule='none' with capability_boundary='unmatched' only when no rule a
 MUST match the selected rule's bracketed label. Estimate p_solve honestly.
 """
 
+# Codex speaks the Responses API, so it gets a Responses-format client and its own route.
+# The target comes from CODEX_MODEL at render time (see README, "Codex and model choice").
+[plugins.dynamic.config.switchyard_config.llm_clients.oci_responses]
+format = "openai_responses"
+base_url = "https://inference.generativeai.@OCI_GENAI_REGION@.oci.oraclecloud.com/openai/v1"
+api_key_env = "OCI_GENAI_API_KEY"
+timeout_ms = 180000
+
+[plugins.dynamic.config.switchyard_config.targets.codex]
+id = "@CODEX_MODEL@"
+llm_client = "oci_responses"
+
+[plugins.dynamic.config.switchyard_config.routes.codex]
+id = "oci/codex"
+type = "passthrough"
+target = "codex"
+
 # The public Switchyard bundle ships a digest but no signature; accept it on integrity.
 [plugins.policy.overrides."nvidia.switchyard"]
 attestation = "integrity_only"

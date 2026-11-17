@@ -1,0 +1,27 @@
+Switchyard routing decisions
+time         algorithm            evidence                           selected -> served
+17:31:05.238 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+17:31:05.718 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+17:31:06.817 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+17:31:10.398 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+17:31:15.672 llm_task_classifier  reason_code=invalid_verdict, source=fail_open xai.grok-4.7 -> xai.grok-4.7
+17:31:19.105 llm_task_classifier  score=0.8, source=llm-classifier, threshold=0.5 openai.gpt-oss-120b -> openai.gpt-oss-120b
+17:31:23.827 passthrough          -                                  xai.grok-4.7 -> xai.grok-4.7
+17:31:25.998 passthrough          -                                  xai.grok-4.7 -> xai.grok-4.7
+
+Model calls recorded by Relay
+time         api                      requested      served model                                   in    out cached        USD status
+17:31:05.238 openai.chat_completions  oci/auto       openai.gpt-oss-120b                           277     69      0   0.000083 OK
+17:31:05.718 openai.chat_completions  oci/auto       openai.gpt-oss-120b                           401     42      0   0.000085 OK
+17:31:06.818 openai.chat_completions  oci/auto       openai.gpt-oss-120b                          1019    144      0   0.000239 OK
+17:31:10.398 openai.chat_completions  oci/auto       openai.gpt-oss-120b                          2518    447      0   0.000646 OK
+17:31:15.672 openai.chat_completions  oci/task       xai.grok-4.7                                 1492     25   1152   0.001406 OK
+17:31:19.106 openai.chat_completions  oci/task       openai.gpt-oss-120b                          1711    394      0   0.000493 OK
+17:31:23.827 openai.chat_completions  oci/capable    xai.grok-4.7                                 1492     25   1152   0.001406 OK
+17:31:25.999 openai.chat_completions  oci/capable    xai.grok-4.7                                 3062    136   1408   0.004828 OK
+
+Totals by served model
+served model                               calls      in     out        USD
+xai.grok-4.7                                   3    6046     186   0.007640
+openai.gpt-oss-120b                            5    5926    1096   0.001547
+total                                                              0.009187

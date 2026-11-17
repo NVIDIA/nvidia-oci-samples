@@ -1,0 +1,11 @@
+**Switchyard routes defined in `relay/plugins.toml.in`**
+
+| Route ID | Target(s) used |
+|----------|----------------|
+| `oci/efficient` | `target = "efficient"` |
+| `oci/capable`   | `target = "capable"` |
+| `oci/auto`      | `capable_target = "capable"`<br>`efficient_target = "efficient"` |
+| `oci/task`      | `classifier_target = "judge"`<br>`strong_target = "capable"`<br>`weak_target = "efficient"` |
+| `oci/codex`     | `target = "codex"` |
+
+These are the only `[plugins.dynamic.config.switchyard_config.routes.*]` sections in the file, each providing the route’s identifier and the target(s) it routes to.
