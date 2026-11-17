@@ -1,8 +1,8 @@
 route          prompt  served model                                   in    out      ms  answer
-oci/efficient  easy    openai.gpt-oss-120b                            86    145    1632  The Quick Brown Fox Jumps Over the Lazy Dog
-oci/capable    easy    xai.grok-4.7                                 1261     10    4384  The Quick Brown Fox Jumps Over the Lazy Dog
-oci/auto       medium  openai.gpt-oss-120b                            79    142    1032  TCP uses a three‑way handshake (SYN, SYN‑ACK, ACK) to **sync
-oci/task       easy    openai.gpt-oss-120b                            86     78    1286  The Quick Brown Fox Jumps Over the Lazy Dog
-oci/task       medium  openai.gpt-oss-120b                            79    166    1924  TCP uses a three‑way handshake to reliably synchronize the i
-oci/task       hard    xai.grok-4.7                                 1288    600   35220  A bounded MPMC ring with per-slot sequence numbers (Vyukov’s
-(direct)       easy    openai.gpt-oss-20b                             86    134    1064  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/efficient  easy    openai.gpt-oss-120b                            86    144    1322  The Quick Brown Fox Jumps over the Lazy Dog
+oci/capable    easy    xai.grok-4.7                                 1261     10    4204  The Quick Brown Fox Jumps Over The Lazy Dog
+oci/auto       medium  openai.gpt-oss-120b                            79    135    1425  TCP uses a three‑way handshake to reliably synchronize both 
+oci/task       easy    openai.gpt-oss-120b                            86    286    2621  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/task       medium  openai.gpt-oss-120b                            79    159    2224  TCP’s three‑way handshake lets both ends first **synchronize
+oci/task       hard    xai.grok-4.7                                 1288    600   20094  A practical C11 MPMC bounded queue is a power-of-two ring of
+(direct)       easy    openai.gpt-oss-20b                             86    362    2034  The Quick Brown Fox Jumps Over the Lazy Dog

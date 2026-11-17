@@ -76,7 +76,27 @@ def main() -> int:
               f"{usage.get('prompt_tokens', 0) or 0:6d} {usage.get('completion_tokens', 0) or 0:6d} "
               f"{usage.get('cache_read_tokens', 0) or 0:6d} {('%.6f' % usd) if usd is not None else '-':>10s} {status}")
 
-    print("\nTotals by served model")
+    # Judge calls happen inside the Switchyard plugin and are recorded as marks, not LLM scopes,
+    # so they never carry a catalog price. Report them so route totals are read as partial.
+    judge = collections.defaultdict(lambda: {"calls": 0, "input": 0, "output": 0})
+    for e in events:
+        if e.get("kind") != "mark":
+            continue
+        d = e.get("data") or {}
+        if e.get("name") == "switchyard.routing.llm_call" and d.get("call_role") == "routing":
+            judge[d.get("selected_model") or "?"]["calls"] += 1
+        if e.get("name") == "switchyard.routing.llm_tokens":
+            for m in d.get("measurements") or []:
+                attrs = m.get("attributes") or {}
+                if attrs.get("call_role") == "routing" and attrs.get("token_type") in ("input", "output"):
+                    judge[attrs.get("target_model") or "?"][attrs["token_type"]] += int(m.get("value") or 0)
+    if judge:
+        print("\nSwitchyard judge calls (routing decisions; not priced by the catalog)")
+        print(f"{'judge model':42s} {'calls':>5s} {'in':>7s} {'out':>7s}")
+        for model, row in judge.items():
+            print(f"{model:42s} {row['calls']:5d} {row['input']:7d} {row['output']:7d}")
+
+    print("\nTotals by served model (judge calls excluded)" if judge else "\nTotals by served model")
     print(f"{'served model':42s} {'calls':>5s} {'in':>7s} {'cached':>7s} {'out':>7s} {'USD':>10s}")
     grand = 0.0
     for model, row in sorted(totals.items(), key=lambda kv: -kv[1]["usd"]):

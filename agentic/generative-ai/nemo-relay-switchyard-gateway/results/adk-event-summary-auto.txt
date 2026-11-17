@@ -1,24 +1,28 @@
 Agent and tool scopes
-18:03:15.078 tool   list_directory
-18:03:15.584 tool   read_file
-18:03:16.170 tool   read_file
-18:03:16.740 tool   read_file
-18:03:20.008 agent  repo_inspector
-18:03:20.009 agent  adk-invocation:repo_inspector_app
-18:03:20.009 agent  adk-request
+18:06:19.913 tool   list_directory
+18:06:20.390 tool   read_file
+18:06:20.777 tool   read_file
+18:06:21.211 tool   read_file
+18:06:21.918 tool   read_file
+18:06:23.163 tool   read_file
+18:06:26.538 agent  repo_inspector
+18:06:26.538 agent  adk-invocation:repo_inspector_app
+18:06:26.538 agent  adk-request
 
 Switchyard routing decisions
 time         algorithm            evidence                           selected -> served
 
 Model calls recorded by Relay
 time         api                      requested      served model                                   in    out cached        USD status
-18:03:15.073 openai                   openai/oci/auto openai.gpt-oss-120b                           277     71      0   0.000084 OK
-18:03:15.582 openai                   openai/oci/auto openai.gpt-oss-120b                           403     49      0   0.000090 OK
-18:03:16.168 openai                   openai/oci/auto openai.gpt-oss-120b                          1001     47      0   0.000178 OK
-18:03:16.736 openai                   openai/oci/auto openai.gpt-oss-120b                          1606     68      0   0.000282 OK
-18:03:20.006 openai                   openai/oci/auto openai.gpt-oss-120b                          3070    477      0   0.000747 OK
+18:06:19.909 openai                   openai/oci/auto openai.gpt-oss-120b                           277     65      0   0.000081 OK
+18:06:20.389 openai                   openai/oci/auto openai.gpt-oss-120b                           397     42      0   0.000085 OK
+18:06:20.775 openai                   openai/oci/auto openai.gpt-oss-120b                           995     39      0   0.000173 OK
+18:06:21.210 openai                   openai/oci/auto openai.gpt-oss-120b                          1615     46      0   0.000270 OK
+18:06:21.917 openai                   openai/oci/auto openai.gpt-oss-120b                          2242     89      0   0.000390 OK
+18:06:23.161 openai                   openai/oci/auto openai.gpt-oss-120b                          2911     65      0   0.000476 OK
+18:06:26.536 openai                   openai/oci/auto openai.gpt-oss-120b                          4354    437      0   0.000915 OK
 
 Totals by served model
 served model                               calls      in  cached     out        USD
-openai.gpt-oss-120b                            5    6357       0     712   0.001381
-total                                                                      0.001381
+openai.gpt-oss-120b                            7   12791       0     783   0.002388
+total                                                                      0.002388
