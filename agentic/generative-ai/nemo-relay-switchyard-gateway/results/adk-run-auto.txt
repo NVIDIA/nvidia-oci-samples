@@ -1,4 +1,4 @@
-**Files in `scripts/`**  
+**Scripts directory**  
 - adk_demo.py  
 - codex_demo.sh  
 - env.sh  
@@ -9,12 +9,11 @@
 
 **Switchyard routes defined in `relay/plugins.toml.in`**
 
-| Route ID | Target (or routing logic) |
-|----------|---------------------------|
+| Route ID | Target(s) used |
+|----------|----------------|
 | `oci/efficient` | `efficient` (passthrough) |
-| `oci/capable`   | `capable` (passthrough) |
-| `oci/auto`      | Auto‑routing: uses `efficient` unless tool evidence triggers escalation to `capable` |
-| `oci/task`      | Classifier routing: **weak** target = `efficient`, **strong** target = `capable`, classifier = `judge` |
-| `oci/codex`     | `codex` (passthrough) |
+| `oci/capable` | `capable` (passthrough) |
+| `oci/auto` | `efficient_target = efficient` and `capable_target = capable` (auto routing) |
+| `oci/task` | `classifier_target = judge`, `strong_target = capable`, `weak_target = efficient` (LLM classifier) |
+| `oci/codex` | `codex` (passthrough) |
 
-These are all the route entries present in the TOML file.

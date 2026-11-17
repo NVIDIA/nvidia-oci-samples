@@ -55,10 +55,20 @@ def read_file(path: str, max_chars: int = 12000) -> dict:
     return {"path": path, "chars": len(text), "truncated": len(text) > max_chars, "text": text[:max_chars]}
 
 
+def credential_for(route: str) -> str:
+    """Switchyard routes hold the OCI key; a direct model id is forwarded and needs the client's key."""
+    if route.startswith("oci/"):
+        return "relay-routed"
+    key = os.environ.get("OCI_GENAI_API_KEY")
+    if not key:
+        raise SystemExit(f"{route} is forwarded to OCI directly; set OCI_GENAI_API_KEY or use a Switchyard route (oci/...)")
+    return key
+
+
 async def run(route: str, gateway: str, question: str) -> None:
     agent = LlmAgent(
         name="repo_inspector",
-        model=LiteLlm(model=f"openai/{route}", api_base=gateway, api_key="relay-routed"),
+        model=LiteLlm(model=f"openai/{route}", api_base=gateway, api_key=credential_for(route)),
         instruction=(
             "You inspect a project directory with the tools. Use list_directory and read_file; "
             "never guess file contents. Keep the final answer under 150 words."

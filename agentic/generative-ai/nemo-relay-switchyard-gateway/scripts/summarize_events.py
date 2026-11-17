@@ -13,10 +13,15 @@ import sys
 def load(path):
     events = []
     with open(path, encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip("\x00\n")
-            if line:
-                events.append(json.loads(line))
+        for number, raw in enumerate(handle, 1):
+            text = raw.strip("\x00\n")
+            if not text:
+                continue
+            try:
+                events.append(json.loads(text))
+            except json.JSONDecodeError:
+                # A partial final line is normal while the gateway is still writing.
+                print(f"warning: skipping malformed JSON on line {number} of {path}", file=sys.stderr)
     return events
 
 
@@ -41,11 +46,12 @@ def main() -> int:
                   f"{d.get('selected_model')} -> {d.get('served_model')}")
         if e.get("kind") == "mark" and e.get("name") == "switchyard.routing.error":
             d = e.get("data") or {}
-            print(f"{e['timestamp'][11:23]:12s} {'ERROR':20s} {d.get('category')}/{d.get('phase'):26s} target={d.get('target')}")
+            where = f"{d.get('category') or '-'}/{d.get('phase') or '-'}"
+            print(f"{e['timestamp'][11:23]:12s} {'ERROR':20s} {where:34s} target={d.get('target') or '-'}")
 
     print("\nModel calls recorded by Relay")
     print(f"{'time':12s} {'api':24s} {'requested':14s} {'served model':42s} {'in':>6s} {'out':>6s} {'cached':>6s} {'USD':>10s} {'status'}")
-    totals = collections.defaultdict(lambda: {"calls": 0, "in": 0, "out": 0, "usd": 0.0, "unpriced": 0})
+    totals = collections.defaultdict(lambda: {"calls": 0, "in": 0, "out": 0, "cached": 0, "usd": 0.0, "unpriced": 0})
     for e in events:
         if e.get("category") != "llm" or e.get("scope_category") != "end":
             continue
@@ -60,6 +66,7 @@ def main() -> int:
         row["calls"] += 1
         row["in"] += usage.get("prompt_tokens") or 0
         row["out"] += usage.get("completion_tokens") or 0
+        row["cached"] += usage.get("cache_read_tokens") or 0
         if usd is None:
             row["unpriced"] += 1
         else:
@@ -70,13 +77,13 @@ def main() -> int:
               f"{usage.get('cache_read_tokens', 0) or 0:6d} {('%.6f' % usd) if usd is not None else '-':>10s} {status}")
 
     print("\nTotals by served model")
-    print(f"{'served model':42s} {'calls':>5s} {'in':>7s} {'out':>7s} {'USD':>10s}")
+    print(f"{'served model':42s} {'calls':>5s} {'in':>7s} {'cached':>7s} {'out':>7s} {'USD':>10s}")
     grand = 0.0
     for model, row in sorted(totals.items(), key=lambda kv: -kv[1]["usd"]):
         grand += row["usd"]
         note = f"  ({row['unpriced']} call(s) without a catalog price)" if row["unpriced"] else ""
-        print(f"{model:42s} {row['calls']:5d} {row['in']:7d} {row['out']:7d} {row['usd']:10.6f}{note}")
-    print(f"{'total':42s} {'':5s} {'':7s} {'':7s} {grand:10.6f}")
+        print(f"{model:42s} {row['calls']:5d} {row['in']:7d} {row['cached']:7d} {row['out']:7d} {row['usd']:10.6f}{note}")
+    print(f"{'total':42s} {'':5s} {'':7s} {'':7s} {'':7s} {grand:10.6f}")
     return 0
 
 

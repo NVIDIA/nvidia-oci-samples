@@ -25,9 +25,24 @@ mkdir -p "$CFG"
 
 sed "s|@OCI_GENAI_REGION@|$OCI_GENAI_REGION|g" "$HERE/relay/config.toml.in" > "$CFG/config.toml"
 
-if ! grep -qs 'switchyard-plugin' "$CFG/plugins.toml"; then
+INSTALLED_TAG="$(python3 - "$CFG" <<'PY'
+import glob, json, os, sys
+tags = set()
+for meta in glob.glob(os.path.join(sys.argv[1], "installed-plugins", "*", ".install.json")):
+    with open(meta, encoding="utf-8") as handle:
+        info = json.load(handle)
+    if info.get("plugin_id") == "nvidia.switchyard":
+        tags.add(info.get("tag", ""))
+print(" ".join(sorted(tags)))
+PY
+)"
+if [ -z "$INSTALLED_TAG" ]; then
   echo "Installing the Switchyard plugin bundle ($SWITCHYARD_PLUGIN_TAG) into $CFG ..."
   nemo-relay plugins install --user "github:NVIDIA/NeMo-Relay-Plugins@$SWITCHYARD_PLUGIN_TAG" --no-enable
+elif [ "$INSTALLED_TAG" != "$SWITCHYARD_PLUGIN_TAG" ]; then
+  echo "Switchyard plugin $INSTALLED_TAG is installed in $CFG but SWITCHYARD_PLUGIN_TAG=$SWITCHYARD_PLUGIN_TAG was requested." >&2
+  echo "Run 'XDG_CONFIG_HOME=$XDG_CONFIG_HOME nemo-relay plugins uninstall --user nvidia.switchyard' (or remove .relay/) and re-run." >&2
+  exit 1
 fi
 
 python3 - "$CFG/plugins.toml" "$HERE/relay/plugins.toml.in" "$OCI_GENAI_REGION" "$HERE/pricing/oci-genai-pricing.json" "$CODEX_MODEL" <<'PY'

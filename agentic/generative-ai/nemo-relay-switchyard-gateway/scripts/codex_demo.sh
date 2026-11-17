@@ -22,7 +22,9 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 command -v codex >/dev/null || { echo "codex CLI not found on PATH" >&2; exit 1; }
 
 RENDERED="$XDG_CONFIG_HOME/nemo-relay/plugins.toml"
-if ! grep -qs "^id = \"$CODEX_MODEL\"" "$RENDERED"; then
+# The id line that follows the codex target table, and nothing else.
+RENDERED_TARGET="$(awk '/^\[plugins\.dynamic\.config\.switchyard_config\.targets\.codex\]/{f=1; next} f && /^id = /{gsub(/^id = "|"$/, ""); print; exit}' "$RENDERED" 2>/dev/null || true)"
+if [ "$RENDERED_TARGET" != "$CODEX_MODEL" ]; then
   echo "Rendering the oci/codex route for $CODEX_MODEL ..."
   CODEX_MODEL="$CODEX_MODEL" "$HERE/scripts/setup.sh" >/dev/null
 fi

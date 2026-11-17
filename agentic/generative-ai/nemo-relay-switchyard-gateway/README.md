@@ -81,13 +81,13 @@ python3 scripts/summarize_events.py
 
 ```text
 route          prompt  served model                 in    out      ms  answer
-oci/efficient  easy    openai.gpt-oss-120b           86     51    1004  The Quick Brown Fox Jumps Over the Lazy Dog
-oci/capable    easy    xai.grok-4.7                1261     10    7685  The Quick Brown Fox Jumps Over the Lazy Dog
-oci/auto       medium  openai.gpt-oss-120b           79    141    1480  TCP's three-way handshake establishes a reli ...
-oci/task       easy    openai.gpt-oss-120b           86     52     991  The Quick Brown Fox Jumps Over the Lazy Dog
-oci/task       medium  openai.gpt-oss-120b           79    145    2127  TCP's three-way handshake lets both endpoint ...
-oci/task       hard    xai.grok-4.7                1288    600   15662  A standard correct design is a bounded ring ...
-(direct)       easy    openai.gpt-oss-20b            86    198     887  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/efficient  easy    openai.gpt-oss-120b           86    145    1632  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/capable    easy    xai.grok-4.7                1261     10    4384  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/auto       medium  openai.gpt-oss-120b           79    142    1032  TCP uses a three-way handshake (SYN, SYN-ACK ...
+oci/task       easy    openai.gpt-oss-120b           86     78    1286  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/task       medium  openai.gpt-oss-120b           79    166    1924  TCP uses a three-way handshake to reliably s ...
+oci/task       hard    xai.grok-4.7                1288    600   35220  A bounded MPMC ring with per-slot sequence n ...
+(direct)       easy    openai.gpt-oss-20b            86    134    1064  The Quick Brown Fox Jumps Over the Lazy Dog
 ```
 
 `scripts/summarize_events.py` reads the ATOF log and shows why each request went where it went, and what it cost ([`results/event-summary.txt`](./results/event-summary.txt)):
@@ -95,28 +95,28 @@ oci/task       hard    xai.grok-4.7                1288    600   15662  A standa
 ```text
 Switchyard routing decisions
 time         algorithm            evidence                                           selected -> served
-17:55:30.429 stage_router         source=fall_open                                   openai.gpt-oss-120b -> openai.gpt-oss-120b
-17:55:31.421 llm_task_classifier  score=1.0, source=llm-classifier, threshold=0.5    openai.gpt-oss-120b -> openai.gpt-oss-120b
-17:55:33.548 llm_task_classifier  score=0.9, source=llm-classifier, threshold=0.5    openai.gpt-oss-120b -> openai.gpt-oss-120b
-17:55:49.210 llm_task_classifier  score=0.0, source=llm-classifier, threshold=0.6    xai.grok-4.7 -> xai.grok-4.7
+18:00:44.867 stage_router         source=fall_open                                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+18:00:46.153 llm_task_classifier  score=1.0, source=llm-classifier, threshold=0.5    openai.gpt-oss-120b -> openai.gpt-oss-120b
+18:00:48.078 llm_task_classifier  score=0.9, source=llm-classifier, threshold=0.5    openai.gpt-oss-120b -> openai.gpt-oss-120b
+18:01:23.298 llm_task_classifier  score=0.0, source=llm-classifier, threshold=0.6    xai.grok-4.7 -> xai.grok-4.7
 
 Totals by served model
-served model           calls      in     out        USD
-xai.grok-4.7               2    2549     610   0.005110
-openai.gpt-oss-120b        4     330     389   0.000283
-openai.gpt-oss-20b         1      86     198   0.000065
-total                                          0.005458
+served model           calls      in  cached     out        USD
+xai.grok-4.7               2    2549    2432     610   0.005110
+openai.gpt-oss-120b        4     330       0     531   0.000368
+openai.gpt-oss-20b         1      86       0     134   0.000046
+total                                                  0.005524
 ```
 
-The judge rated the easy and medium prompts as within the efficient model's reach (scores 1.0 and 0.9) and the lock-free queue design as not (score 0.0), so only that request paid for Grok 4.7. The two Grok calls account for 94% of the run's cost. The `status` column carries Relay's per-call status; all seven calls are `OK`.
+The judge rated the easy and medium prompts as within the efficient model's reach (scores 1.0 and 0.9) and the lock-free queue design as not (score 0.0), so only that request paid for Grok 4.7. The two Grok calls account for 93% of the run's cost. The `status` column carries Relay's per-call status; all seven calls are `OK`.
 
 `scripts/adk_demo.py` asks the same question on three routes: list the sample's scripts, then read `relay/plugins.toml.in` and report every route and its target. All three answers were correct in the captured run ([`results/adk-run-*.txt`](./results/)); the cost of getting there differs ([`results/adk-gateway-summary.txt`](./results/adk-gateway-summary.txt)):
 
 | Route | Model calls | Served by | USD |
 |---|---|---|---|
-| `oci/auto` | 6 | gpt-oss-120b for all six (stage router, no escalation on read-only tool results) | 0.0018 |
-| `oci/task` | 2 | Grok 4.7 for both (judge scores 0.2 and 0.2, below the tools-adjusted threshold of 0.6) | 0.0034 |
-| `oci/capable` | 2 | Grok 4.7 for both | 0.0037 |
+| `oci/auto` | 5 | gpt-oss-120b for all 5 | 0.0014 |
+| `oci/task` | 3 | 1x gpt-oss-120b / 2x Grok 4.7 | 0.0063 |
+| `oci/capable` | 2 | Grok 4.7 for both | 0.0064 |
 
 The judge treats a request that carries tools as outside the efficient model's documented reach, so `oci/task` escalates every agent turn to Grok 4.7 and ends up close to `oci/capable` in cost, while `oci/auto` keeps the whole run on the efficient model because the tool results never trigger an escalation. The in-process log ([`results/adk-event-summary-*.txt`](./results/)) shows the agent, tool, and model scopes with the same USD figures, because `relay/plugins-inprocess.toml` loads the same catalog.
 
@@ -154,7 +154,7 @@ Swap model ids for any others your region serves. The Switchyard [TOML schema](h
 
 [`pricing/oci-genai-pricing.json`](./pricing/oci-genai-pricing.json) is a Relay pricing catalog with OCI's public on-demand list prices for the token-priced chat models: `openai.gpt-oss-120b`, `openai.gpt-oss-20b`, `xai.grok-4.7`, `xai.grok-4.6`, `xai.grok-4.3`, `xai.grok-4.2`, and the Gemini 2.5 family. Grok and Gemini 2.5 Pro use Relay's `prompt_token_threshold` schedule for their short- and long-context rates. Prices were taken from the [OCI price list](https://www.oracle.com/cloud/price-list/#genai) on 2026-11-17; check them before relying on the estimates.
 
-Requests arrive on Relay's OpenAI-compatible route, so Relay prices them as provider `openai` with the OCI model id; the catalog also carries `oci/...` and `oci_genai/...` aliases for calls recorded through Relay's native OCI codec. Models that OCI bills per 10,000 transactions (Llama, Cohere) are not in the catalog, so their calls show no cost. Validate and inspect the catalog with:
+Requests arrive on Relay's OpenAI-compatible route, so Relay prices them as provider `openai` with the OCI model id; the catalog also carries `oci/...` and `oci_genai/...` aliases for calls recorded through Relay's native OCI codec. Models that OCI bills per 10,000 transactions (Llama, Cohere) are not in the catalog, so their calls show no cost: a transaction is one character of prompt or response, which Relay's per-token rates cannot express exactly. Validate and inspect the catalog with:
 
 ```bash
 nemo-relay model-pricing validate pricing/oci-genai-pricing.json
