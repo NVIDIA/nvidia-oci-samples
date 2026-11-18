@@ -10,6 +10,7 @@ so it runs only when OCI_GENAI_API_KEY is set.
 """
 import argparse
 import os
+import urllib.parse
 import sys
 import time
 
@@ -41,8 +42,12 @@ def main() -> int:
     parser.add_argument("--direct-model", default="openai.gpt-oss-20b",
                         help="model id for the direct (non-routed) call; '' to skip")
     args = parser.parse_args()
-
     key = os.environ.get("OCI_GENAI_API_KEY")
+    base = urllib.parse.urlsplit(args.base_url)
+    if args.direct_model and key and base.scheme != "https" and base.hostname not in {"127.0.0.1", "localhost", "::1"}:
+        # The direct call sends OCI_GENAI_API_KEY as the bearer token; never put it on the wire in cleartext.
+        parser.error("--base-url must use https:// for the direct model call unless it targets a loopback host")
+
     routed = OpenAI(base_url=args.base_url, api_key="relay-routed")
     print(f"{'route':14s} {'prompt':7s} {'served model':42s} {'in':>6s} {'out':>6s} {'ms':>7s}  answer")
     failures = 0

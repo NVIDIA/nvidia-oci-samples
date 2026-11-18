@@ -31,6 +31,9 @@ case "${1:-}" in
       sleep 0.25
     done
     if ! kill -0 "$GATEWAY_PID" 2>/dev/null || ! curl -sf --max-time 2 "http://$RELAY_BIND/healthz" >/dev/null 2>&1; then
+      # A child that is alive but never became healthy would otherwise outlive its PID file.
+      kill "$GATEWAY_PID" 2>/dev/null || true
+      wait "$GATEWAY_PID" 2>/dev/null || true
       rm -f "$PIDFILE"
       echo "gateway did not come up; see logs/gateway.log" >&2
       exit 1

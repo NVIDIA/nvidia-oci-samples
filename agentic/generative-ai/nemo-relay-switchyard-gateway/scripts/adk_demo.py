@@ -14,6 +14,7 @@ Requires: pip install -r requirements-adk.txt, and scripts/gateway.sh start.
 import argparse
 import asyncio
 import os
+import urllib.parse
 from pathlib import Path
 
 from google.adk.agents import LlmAgent
@@ -99,6 +100,10 @@ def main() -> None:
     parser.add_argument("--gateway", default=os.environ.get("RELAY_GATEWAY", "http://127.0.0.1:4040/v1"))
     parser.add_argument("--question", default=QUESTION)
     args = parser.parse_args()
+    gateway = urllib.parse.urlsplit(args.gateway)
+    if not args.route.startswith("oci/") and gateway.scheme != "https" and gateway.hostname not in {"127.0.0.1", "localhost", "::1"}:
+        # A direct model id sends OCI_GENAI_API_KEY as the bearer token; never put it on the wire in cleartext.
+        parser.error("--gateway must use https:// for a direct model id unless it targets a loopback host")
     os.chdir(SAMPLE_ROOT)  # the in-process ATOF sink path is relative to the working directory
     asyncio.run(run(args.route, args.gateway, args.question))
 
