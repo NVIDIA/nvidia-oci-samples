@@ -1,0 +1,4 @@
+# Rendered Relay configuration, downloaded plugin bundle, Codex runtime home, and run logs.
+.relay/
+logs/
+__pycache__/

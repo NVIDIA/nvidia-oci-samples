@@ -51,6 +51,7 @@ Samples are organized first by use case, then by OCI service or deployment platf
 
 - OKE / AIQ: [Deploy NVIDIA AIQ 2.0](agentic/oke/aiq/aiq-2.0)
 - Generative AI / NeMo Relay: [Agent observability on OCI Generative AI](agentic/generative-ai/nemo-relay-advisor)
+- Generative AI / NeMo Relay + NeMo Switchyard: [Route coding agents across OCI Generative AI models](agentic/generative-ai/nemo-relay-switchyard-gateway)
 
 ### Inference
 

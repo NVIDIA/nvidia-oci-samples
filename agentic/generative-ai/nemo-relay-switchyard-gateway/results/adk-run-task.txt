@@ -1,0 +1,19 @@
+**scripts/**
+
+- adk_demo.py
+- codex_demo.sh
+- env.sh
+- gateway.sh
+- route_demo.py
+- setup.sh
+- summarize_events.py
+
+**Switchyard routes** (`relay/plugins.toml.in`)
+
+| Route id | Target(s) |
+|---|---|
+| `oci/efficient` | `efficient` |
+| `oci/capable` | `capable` |
+| `oci/auto` | `efficient` (start), `capable` (escalate) |
+| `oci/task` | judge: `judge`; strong: `capable`; weak: `efficient` |
+| `oci/codex` | `codex` |

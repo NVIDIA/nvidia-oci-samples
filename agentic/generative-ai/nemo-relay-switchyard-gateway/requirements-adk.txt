@@ -1,0 +1,5 @@
+# scripts/adk_demo.py: a Google ADK agent whose model calls go through the Relay gateway.
+nemo-relay[google-adk]>=0.11.1
+google-adk>=2.14
+litellm>=1.106.2
+openai>=2

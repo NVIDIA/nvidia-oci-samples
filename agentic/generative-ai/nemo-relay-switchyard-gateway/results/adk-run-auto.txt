@@ -1,0 +1,18 @@
+**Files under `scripts/`**  
+- adk_demo.py  
+- codex_demo.sh  
+- env.sh  
+- gateway.sh  
+- route_demo.py  
+- setup.sh  
+- summarize_events.py  
+
+**Switchyard routes defined in `relay/plugins.toml.in`**
+
+| Route ID | Target(s) used |
+|----------|----------------|
+| `oci/efficient` | `efficient` (passthrough) |
+| `oci/capable`   | `capable` (passthrough) |
+| `oci/auto`      | `efficient` (weak) → `capable` (capable_target) – auto‑selection |
+| `oci/task`      | `efficient` (weak_target) ↔ `capable` (strong_target) – classifier‑based |
+| `oci/codex`     | `codex` (passthrough) |

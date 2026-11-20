@@ -1,0 +1,8 @@
+route          prompt  served model                                   in    out      ms  answer
+oci/efficient  easy    openai.gpt-oss-120b                            86     63     692  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/capable    easy    xai.grok-4.7                                 1261     10    4451  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/auto       medium  openai.gpt-oss-120b                            79    145    1818  TCP’s three‑way handshake lets the two endpoints agree on in
+oci/task       easy    openai.gpt-oss-120b                            86     52     883  The Quick Brown Fox Jumps Over the Lazy Dog
+oci/task       medium  openai.gpt-oss-120b                            79    165    2539  TCP’s three‑way handshake lets both endpoints agree on initi
+oci/task       hard    xai.grok-4.7                                 1288    600   29603  A correct C11 MPMC bounded queue is a ring of slots whose **
+(direct)       easy    openai.gpt-oss-20b                             86    223    1256  The Quick Brown Fox Jumps Over the Lazy Dog

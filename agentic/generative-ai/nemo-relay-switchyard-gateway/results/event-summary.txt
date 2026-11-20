@@ -1,0 +1,29 @@
+Switchyard routing decisions
+time         algorithm            evidence                           selected -> served
+22:16:10.869 passthrough          -                                  openai.gpt-oss-120b -> openai.gpt-oss-120b
+22:16:15.325 passthrough          -                                  xai.grok-4.7 -> xai.grok-4.7
+22:16:17.142 stage_router         source=fall_open                   openai.gpt-oss-120b -> openai.gpt-oss-120b
+22:16:18.027 llm_task_classifier  score=1.0, source=llm-classifier, threshold=0.5 openai.gpt-oss-120b -> openai.gpt-oss-120b
+22:16:20.567 llm_task_classifier  score=0.9, source=llm-classifier, threshold=0.5 openai.gpt-oss-120b -> openai.gpt-oss-120b
+22:16:50.170 llm_task_classifier  score=0.0, source=llm-classifier, threshold=0.6 xai.grok-4.7 -> xai.grok-4.7
+
+Model calls recorded by Relay
+time         api                      requested      served model                                   in    out cached        USD status
+22:16:10.869 openai.chat_completions  oci/efficient  openai.gpt-oss-120b                            86     63      0   0.000051 OK
+22:16:15.325 openai.chat_completions  oci/capable    xai.grok-4.7                                 1261     10   1152   0.000854 OK
+22:16:17.142 openai.chat_completions  oci/auto       openai.gpt-oss-120b                            79    145      0   0.000099 OK
+22:16:18.027 openai.chat_completions  oci/task       openai.gpt-oss-120b                            86     52      0   0.000044 OK
+22:16:20.567 openai.chat_completions  oci/task       openai.gpt-oss-120b                            79    165      0   0.000111 OK
+22:16:50.170 openai.chat_completions  oci/task       xai.grok-4.7                                 1288    600   1152   0.004448 OK
+22:16:51.425 openai.chat_completions  openai.gpt-oss-20b openai.gpt-oss-20b                             86    223      0   0.000073 OK
+
+Switchyard judge calls (routing decisions; not priced by the catalog)
+judge model                                calls      in     out
+meta.llama-4-scout-17b-16e-instruct            3     685     155
+
+Totals by served model (judge calls excluded)
+served model                               calls      in  cached     out        USD
+xai.grok-4.7                                   2    2549    2304     610   0.005302
+openai.gpt-oss-120b                            4     330       0     425   0.000305
+openai.gpt-oss-20b                             1      86       0     223   0.000073
+total                                                                      0.005679

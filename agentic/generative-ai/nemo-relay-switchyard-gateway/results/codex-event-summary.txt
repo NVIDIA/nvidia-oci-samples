@@ -1,0 +1,18 @@
+Agent and tool scopes
+18:01:57.573 tool   Bash
+18:01:58.464 agent  codex-task
+
+Switchyard routing decisions
+time         algorithm            evidence                           selected -> served
+18:01:56.329 passthrough          -                                  $CODEX_MODEL        -> $CODEX_MODEL       
+18:01:57.939 passthrough          -                                  $CODEX_MODEL        -> $CODEX_MODEL       
+
+Model calls recorded by Relay
+time         api                      requested      served model                                   in    out cached        USD status
+18:01:57.300 openai.responses         oci/codex      $CODEX_MODEL                                 5480    109      0          - OK
+18:01:58.415 openai.responses         oci/codex      $CODEX_MODEL                                 5634     10   5376          - OK
+
+Totals by served model
+served model                               calls      in  cached     out        USD
+$CODEX_MODEL                                   2   11114    5376     119   0.000000  (2 call(s) without a catalog price)
+total                                                                      0.000000

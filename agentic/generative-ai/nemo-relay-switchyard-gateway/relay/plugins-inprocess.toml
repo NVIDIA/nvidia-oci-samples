@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# NeMo Relay configuration for the in-process Python SDK used by scripts/adk_demo.py. The ADK
+# agent, its tools, and its model calls are recorded here; the gateway records the same model
+# calls with the Switchyard decision and the USD estimate in logs/events.jsonl.
+[[components]]
+kind = "observability"
+enabled = true
+
+[components.config]
+version = 4
+enable_full_payloads = false
+
+[components.config.atof]
+enabled = true
+
+[[components.config.atof.sinks]]
+type = "file"
+output_directory = "logs"
+filename = "adk-events.jsonl"
+mode = "overwrite"
+
+# Price the in-process view of the same calls with the sample catalog (path relative to the
+# sample directory, which scripts/adk_demo.py uses as its working directory).
+[[components]]
+kind = "pricing"
+enabled = true
+
+[[components.config.sources]]
+type = "file"
+path = "pricing/oci-genai-pricing.json"

@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+#
+# NeMo Relay user configuration for this sample. Rendered by scripts/setup.sh from the
+# OCI_GENAI_REGION environment variable; do not edit the rendered copy by hand.
+#
+# Relay forwards OpenAI-compatible traffic (Chat Completions and Responses) to the
+# OCI Generative AI OpenAI-compatible endpoint of one region. Credentials are never
+# stored here: direct clients send their own OCI Generative AI API key, and managed
+# coding-agent runs take the key from NEMO_RELAY_OPENAI_AUTH_HEADER.
+
+[upstream]
+openai_base_url = "https://inference.generativeai.@OCI_GENAI_REGION@.oci.oraclecloud.com/openai/v1"
+
+[agents.codex]
+command = "codex"
